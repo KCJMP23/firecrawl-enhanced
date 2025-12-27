@@ -1,0 +1,1039 @@
+{
+  "info": {
+    "name": "WebHarvest API Collection",
+    "description": "Comprehensive collection for testing WebHarvest API endpoints including scraping, crawling, batch processing, and MCP integration.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "webharvest-api-collection"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "wh_your_api_key_here",
+      "type": "string"
+    },
+    {
+      "key": "test_url",
+      "value": "https://example.com",
+      "type": "string"
+    },
+    {
+      "key": "docs_url", 
+      "value": "https://docs.example.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Get basic API information and available endpoints"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET", 
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/healthz",
+              "host": ["{{base_url}}"],
+              "path": ["healthz"]
+            },
+            "description": "Basic health check for load balancer"
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/readyz",
+              "host": ["{{base_url}}"],
+              "path": ["readyz"]
+            },
+            "description": "Comprehensive readiness check for all dependencies"
+          },
+          "response": []
+        },
+        {
+          "name": "Liveness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/livez",
+              "host": ["{{base_url}}"],
+              "path": ["livez"]
+            },
+            "description": "Liveness probe for Kubernetes"
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Prometheus metrics for monitoring"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Scraping",
+      "item": [
+        {
+          "name": "Basic Scrape (Markdown)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains success field\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "});",
+                  "",
+                  "pm.test(\"Scraping was successful\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains data\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('markdown');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\"],\n  \"onlyMainContent\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Scrape a URL and extract markdown content"
+          },
+          "response": []
+        },
+        {
+          "name": "Multi-Format Scrape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\", \"html\", \"links\", \"images\"],\n  \"onlyMainContent\": true,\n  \"mobile\": false,\n  \"timeout\": 30000,\n  \"waitFor\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Scrape with multiple output formats"
+          },
+          "response": []
+        },
+        {
+          "name": "Screenshot Scrape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\", \"screenshot\"],\n  \"onlyMainContent\": true,\n  \"mobile\": false,\n  \"waitFor\": 2000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Scrape with screenshot capture"
+          },
+          "response": []
+        },
+        {
+          "name": "Mobile Scrape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\"],\n  \"onlyMainContent\": true,\n  \"mobile\": true,\n  \"timeout\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Scrape using mobile viewport"
+          },
+          "response": []
+        },
+        {
+          "name": "Scrape with Custom Headers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\"],\n  \"onlyMainContent\": true,\n  \"headers\": {\n    \"User-Agent\": \"WebHarvest-Bot/1.0\",\n    \"Accept-Language\": \"en-US,en;q=0.9\"\n  },\n  \"maxAge\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Scrape with custom headers and disabled caching"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Crawling",
+      "item": [
+        {
+          "name": "Start Basic Crawl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Crawl started successfully\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});",
+                  "",
+                  "// Save crawl ID for use in subsequent requests",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.id) {",
+                  "    pm.collectionVariables.set('crawl_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{docs_url}}\",\n  \"maxDiscoveryDepth\": 3,\n  \"limit\": 50,\n  \"delay\": 500,\n  \"maxConcurrency\": 2,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\"],\n    \"onlyMainContent\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/crawl",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "crawl"]
+            },
+            "description": "Start a basic crawl with depth 3 and 50 page limit"
+          },
+          "response": []
+        },
+        {
+          "name": "Advanced Crawl with Filtering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type", 
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{docs_url}}\",\n  \"maxDiscoveryDepth\": 5,\n  \"limit\": 200,\n  \"includePaths\": [\"/docs/.*\", \"/api/.*\", \"/guide/.*\"],\n  \"excludePaths\": [\"/docs/legacy/.*\", \".*\\\\.pdf$\"],\n  \"sitemap\": \"include\",\n  \"ignoreQueryParameters\": true,\n  \"allowSubdomains\": false,\n  \"delay\": 250,\n  \"maxConcurrency\": 3,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\", \"links\"],\n    \"onlyMainContent\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/crawl",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "crawl"]
+            },
+            "description": "Advanced crawl with path filtering and subdomain control"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crawl Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/crawl/{{crawl_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "crawl", "{{crawl_id}}"]
+            },
+            "description": "Get status and results of a crawl job"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Crawl",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/crawl/{{crawl_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "crawl", "{{crawl_id}}"]
+            },
+            "description": "Cancel a running crawl job"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Site Mapping",
+      "item": [
+        {
+          "name": "Basic Site Map",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Mapping successful\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData).to.have.property('links');",
+                  "    pm.expect(jsonData.links).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{docs_url}}\",\n  \"limit\": 1000,\n  \"ignoreSitemap\": false,\n  \"sitemapOnly\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/map",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "map"]
+            },
+            "description": "Map a website to discover all URLs"
+          },
+          "response": []
+        },
+        {
+          "name": "Filtered Site Map",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{docs_url}}\",\n  \"search\": \"api\",\n  \"limit\": 500,\n  \"ignoreSitemap\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/map",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "map"]
+            },
+            "description": "Map a website with search filter"
+          },
+          "response": []
+        },
+        {
+          "name": "Sitemap Only Map",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{docs_url}}\",\n  \"limit\": 10000,\n  \"ignoreSitemap\": false,\n  \"sitemapOnly\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/map",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "map"]
+            },
+            "description": "Use only sitemap for fast URL discovery"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Batch Processing",
+      "item": [
+        {
+          "name": "Start Batch Scrape",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Batch started successfully\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});",
+                  "",
+                  "// Save batch ID for status checking",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.id) {",
+                  "    pm.collectionVariables.set('batch_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urls\": [\n    \"https://example.com\",\n    \"https://example.com/about\",\n    \"https://example.com/contact\",\n    \"https://httpbin.org/html\",\n    \"https://httpbin.org/json\"\n  ],\n  \"ignoreInvalidURLs\": true,\n  \"maxConcurrency\": 3,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\", \"links\"],\n    \"onlyMainContent\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape"]
+            },
+            "description": "Start batch scraping multiple URLs"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Batch Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape/{{batch_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape", "{{batch_id}}"]
+            },
+            "description": "Get status and results of batch scrape job"
+          },
+          "response": []
+        },
+        {
+          "name": "Large Batch with Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urls\": [\n    \"https://example.com/page1\",\n    \"https://example.com/page2\",\n    \"https://example.com/page3\",\n    \"https://example.com/page4\",\n    \"https://example.com/page5\",\n    \"https://httpbin.org/html\",\n    \"https://httpbin.org/json\",\n    \"https://httpbin.org/xml\"\n  ],\n  \"ignoreInvalidURLs\": true,\n  \"maxConcurrency\": 5,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\"],\n    \"onlyMainContent\": true\n  },\n  \"webhook\": {\n    \"url\": \"https://webhook.site/your-unique-url\",\n    \"headers\": {\n      \"X-Webhook-Source\": \"WebHarvest-Batch\",\n      \"Authorization\": \"Bearer your-webhook-token\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape"]
+            },
+            "description": "Batch scrape with webhook notification"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "MCP (Model Context Protocol)",
+      "item": [
+        {
+          "name": "MCP Server Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Get MCP server capabilities and information"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Initialize",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Initialize MCP connection"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP List Tools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/list\",\n  \"params\": {}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "List all available MCP tools"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Scrape URL Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"scrape_url\",\n    \"arguments\": {\n      \"url\": \"{{test_url}}\",\n      \"formats\": [\"markdown\"],\n      \"onlyMainContent\": true,\n      \"waitFor\": 1000\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Call scrape_url tool via MCP"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Start Crawl Tool",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract crawl ID from MCP response",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.result && jsonData.result.crawl_id) {",
+                  "    pm.collectionVariables.set('mcp_crawl_id', jsonData.result.crawl_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 4,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"crawl_site\",\n    \"arguments\": {\n      \"url\": \"{{docs_url}}\",\n      \"maxDepth\": 3,\n      \"limit\": 20,\n      \"includePaths\": [\"/docs/.*\"],\n      \"excludePaths\": [\"/blog/.*\"]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Start crawl via MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Get Crawl Status Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 5,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_crawl_status\",\n    \"arguments\": {\n      \"crawl_id\": \"{{mcp_crawl_id}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Check crawl status via MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Map Site Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 6,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"map_site\",\n    \"arguments\": {\n      \"url\": \"{{docs_url}}\",\n      \"limit\": 100\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Map site URLs via MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP List Prompts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 7,\n  \"method\": \"prompts/list\",\n  \"params\": {}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "List available MCP prompts"
+          },
+          "response": []
+        },
+        {
+          "name": "MCP Get Documentation Prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 8,\n  \"method\": \"prompts/get\",\n  \"params\": {\n    \"name\": \"ingest_docs\",\n    \"arguments\": {\n      \"url\": \"{{docs_url}}\",\n      \"collection_name\": \"Example Documentation\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp",
+              "host": ["{{base_url}}"],
+              "path": ["mcp"]
+            },
+            "description": "Get documentation ingestion prompt"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Invalid URL Scrape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"not-a-valid-url\",\n  \"formats\": [\"markdown\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Test error handling with invalid URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Unauthorized Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_key"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Test authentication failure"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Authorization Header", 
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{test_url}}\",\n  \"formats\": [\"markdown\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Test missing authentication"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Crawl ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/crawl/invalid-crawl-id",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "crawl", "invalid-crawl-id"]
+            },
+            "description": "Test 404 error with invalid crawl ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Batch ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape/invalid-batch-id",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape", "invalid-batch-id"]
+            },
+            "description": "Test 404 error with invalid batch ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Empty Batch URLs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urls\": [],\n  \"maxConcurrency\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape"]
+            },
+            "description": "Test error with empty URL array"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Performance Testing",
+      "item": [
+        {
+          "name": "Load Test - Multiple Scrapes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urls\": [\n    \"https://httpbin.org/html\",\n    \"https://httpbin.org/json\",\n    \"https://httpbin.org/xml\",\n    \"https://httpbin.org/delay/1\",\n    \"https://httpbin.org/delay/2\",\n    \"https://httpbin.org/user-agent\",\n    \"https://httpbin.org/headers\",\n    \"https://httpbin.org/ip\",\n    \"https://httpbin.org/uuid\",\n    \"https://httpbin.org/base64/aGVsbG8gd29ybGQ=\"\n  ],\n  \"maxConcurrency\": 5,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\"],\n    \"onlyMainContent\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/batch/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "batch", "scrape"]
+            },
+            "description": "Performance test with multiple URLs"
+          },
+          "response": []
+        },
+        {
+          "name": "Timeout Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://httpbin.org/delay/10\",\n  \"formats\": [\"markdown\"],\n  \"timeout\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Test timeout handling with slow endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Large Page Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://httpbin.org/drip?duration=5&numbytes=10000\",\n  \"formats\": [\"markdown\", \"html\"],\n  \"timeout\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/scrape",
+              "host": ["{{base_url}}"],
+              "path": ["v2", "scrape"]
+            },
+            "description": "Test with large/slow streaming content"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "global-prerequest",
+        "exec": [
+          "// Set dynamic variables if needed",
+          "if (!pm.collectionVariables.get('test_timestamp')) {",
+          "    pm.collectionVariables.set('test_timestamp', Date.now());",
+          "}",
+          "",
+          "// Log the request being made",
+          "console.log('Making request to:', pm.request.url.toString());"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "global-test",
+        "exec": [
+          "// Global test for response time",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});",
+          "",
+          "// Log response status",
+          "console.log('Response status:', pm.response.status, pm.response.code);"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  webclone-pro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/webclone_pro
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    networks:
+      - webclone-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: webclone_pro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - webclone-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - webclone-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - webclone-network
+
+  webharvest-api:
+    build:
+      context: ../webharvest
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/webclone_pro
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - webclone-network
+
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    ports:
+      - "5080:5080"
+    environment:
+      - ZO_DATA_DIR=/data
+      - ZO_TELEMETRY_ENABLED=false
+    volumes:
+      - openobserve_data:/data
+    networks:
+      - webclone-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/ssl/certs
+    depends_on:
+      - webclone-pro
+    networks:
+      - webclone-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  openobserve_data:
+
+networks:
+  webclone-network:
+    driver: bridge

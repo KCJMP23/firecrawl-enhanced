@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Firecrawl Clone - Interactive API Examples</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        .code-example {
+            background: #1e1e1e;
+            border-radius: 8px;
+            position: relative;
+        }
+        .code-tabs {
+            background: #2d2d2d;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background: #1e1e1e;
+            color: #fbbf24;
+        }
+        .tab-button:hover:not(.active) {
+            background: #404040;
+        }
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .copy-button:hover {
+            background: #4b5563;
+        }
+        .copy-button.copied {
+            background: #10b981;
+        }
+        .response-viewer {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .api-tester {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-200 { color: #10b981; }
+        .status-400 { color: #f59e0b; }
+        .status-error { color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-6 py-8">
+            <h1 class="text-4xl font-bold mb-2">🔥 Interactive API Examples</h1>
+            <p class="text-xl opacity-90">Test and explore the Firecrawl Clone APIs with live examples</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-6">
+            <div class="flex space-x-8 overflow-x-auto">
+                <button class="nav-tab py-4 px-2 border-b-2 border-transparent hover:border-blue-500 whitespace-nowrap active" data-section="webharvest">
+                    🕷️ WebHarvest API
+                </button>
+                <button class="nav-tab py-4 px-2 border-b-2 border-transparent hover:border-blue-500 whitespace-nowrap" data-section="webclone">
+                    🎨 WebClone Pro API
+                </button>
+                <button class="nav-tab py-4 px-2 border-b-2 border-transparent hover:border-blue-500 whitespace-nowrap" data-section="authentication">
+                    🔐 Authentication
+                </button>
+                <button class="nav-tab py-4 px-2 border-b-2 border-transparent hover:border-blue-500 whitespace-nowrap" data-section="workflows">
+                    🔄 Workflows
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- WebHarvest API Section -->
+        <section id="webharvest" class="section active">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-4">🕷️ WebHarvest API Examples</h2>
+                <p class="text-gray-600 mb-6">Self-hosted web scraping platform with MCP integration</p>
+            </div>
+
+            <!-- Scrape Single URL -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">📄 Scrape Single URL</h3>
+                <p class="text-gray-600 mb-4">Extract content from a single webpage with various output formats</p>
+                
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <div>
+                        <div class="code-example mb-4">
+                            <div class="code-tabs">
+                                <div class="flex">
+                                    <button class="tab-button active" data-tab="curl-scrape">cURL</button>
+                                    <button class="tab-button" data-tab="python-scrape">Python</button>
+                                    <button class="tab-button" data-tab="js-scrape">JavaScript</button>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <button class="copy-button" onclick="copyCode(this)">
+                                    <i class="far fa-copy"></i> Copy
+                                </button>
+                                <div id="curl-scrape" class="tab-content active">
+                                    <pre><code class="language-bash">curl -X POST "http://localhost:8080/v2/scrape" \
+  -H "Authorization: Bearer wh_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "formats": ["markdown", "html", "links"],
+    "onlyMainContent": true,
+    "includeTags": ["title", "description"],
+    "waitFor": 2000,
+    "timeout": 30
+  }'</code></pre>
+                                </div>
+                                <div id="python-scrape" class="tab-content">
+                                    <pre><code class="language-python">import requests
+import json
+
+# WebHarvest client configuration
+api_key = "wh_your_api_key"
+base_url = "http://localhost:8080"
+
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+# Scrape configuration
+scrape_data = {
+    "url": "https://example.com",
+    "formats": ["markdown", "html", "links"],
+    "onlyMainContent": True,
+    "includeTags": ["title", "description"],
+    "waitFor": 2000,
+    "timeout": 30
+}
+
+# Make the request
+response = requests.post(
+    f"{base_url}/v2/scrape",
+    headers=headers,
+    json=scrape_data
+)
+
+if response.status_code == 200:
+    result = response.json()
+    print("✅ Scraping successful!")
+    print(f"📄 Title: {result['data']['metadata']['title']}")
+    print(f"📝 Content length: {len(result['data']['markdown'])}")
+else:
+    print(f"❌ Error: {response.status_code}")
+    print(response.text)</code></pre>
+                                </div>
+                                <div id="js-scrape" class="tab-content">
+                                    <pre><code class="language-javascript">// WebHarvest API client
+class WebHarvestClient {
+  constructor(apiKey, baseUrl = 'http://localhost:8080') {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl;
+  }
+
+  async scrape(url, options = {}) {
+    const config = {
+      url,
+      formats: ['markdown', 'html', 'links'],
+      onlyMainContent: true,
+      includeTags: ['title', 'description'],
+      waitFor: 2000,
+      timeout: 30,
+      ...options
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/v2/scrape`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('❌ Scraping failed:', error);
+      throw error;
+    }
+  }
+}
+
+// Usage example
+const client = new WebHarvestClient('wh_your_api_key');
+
+client.scrape('https://example.com')
+  .then(result => {
+    console.log('✅ Scraping successful!');
+    console.log('📄 Title:', result.data.metadata.title);
+    console.log('📝 Content length:', result.data.markdown.length);
+  })
+  .catch(error => {
+    console.error('❌ Error:', error.message);
+  });</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Tester -->
+                        <div class="api-tester p-4">
+                            <h4 class="font-semibold mb-3">🧪 Try it yourself</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">API Key</label>
+                                    <input type="text" id="scrape-api-key" placeholder="wh_your_api_key" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">URL to scrape</label>
+                                    <input type="url" id="scrape-url" value="https://example.com" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-2"> Markdown
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2"> HTML
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-2"> Links
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2"> Screenshot
+                                    </label>
+                                </div>
+                                <button id="test-scrape" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                                    <span class="button-text">🚀 Test Scrape</span>
+                                    <div class="spinner hidden inline-block ml-2"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold mb-3">📋 Response</h4>
+                        <div class="response-viewer p-4" id="scrape-response">
+                            <div class="text-gray-400 text-center py-8">
+                                Click "Test Scrape" to see the API response
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crawl Website -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">🕸️ Crawl Website</h3>
+                <p class="text-gray-600 mb-4">Recursively crawl an entire website with depth control</p>
+                
+                <div class="code-example mb-4">
+                    <div class="code-tabs">
+                        <div class="flex">
+                            <button class="tab-button active" data-tab="curl-crawl">cURL</button>
+                            <button class="tab-button" data-tab="python-crawl">Python</button>
+                            <button class="tab-button" data-tab="js-crawl">JavaScript</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <div id="curl-crawl" class="tab-content active">
+                            <pre><code class="language-bash"># Start crawl
+curl -X POST "http://localhost:8080/v2/crawl" \
+  -H "Authorization: Bearer wh_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://docs.example.com",
+    "limit": 100,
+    "maxDepth": 3,
+    "includePaths": ["^/docs/.*"],
+    "excludePaths": [".*\\.pdf$", ".*/private/.*"],
+    "allowBackwardLinks": false,
+    "allowExternalLinks": false
+  }'
+
+# Check status
+curl -X GET "http://localhost:8080/v2/crawl/{job_id}" \
+  -H "Authorization: Bearer wh_your_api_key"</code></pre>
+                        </div>
+                        <div id="python-crawl" class="tab-content">
+                            <pre><code class="language-python">import requests
+import time
+import json
+
+class WebHarvestCrawler:
+    def __init__(self, api_key, base_url="http://localhost:8080"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    def start_crawl(self, url, **options):
+        """Start a new crawl job"""
+        crawl_config = {
+            "url": url,
+            "limit": 100,
+            "maxDepth": 3,
+            "includePaths": ["^/docs/.*"],
+            "excludePaths": [".*\\.pdf$", ".*/private/.*"],
+            "allowBackwardLinks": False,
+            "allowExternalLinks": False,
+            **options
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/crawl",
+            headers=self.headers,
+            json=crawl_config
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result["jobId"]
+        else:
+            raise Exception(f"Failed to start crawl: {response.text}")
+    
+    def get_crawl_status(self, job_id):
+        """Get crawl job status"""
+        response = requests.get(
+            f"{self.base_url}/v2/crawl/{job_id}",
+            headers=self.headers
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to get status: {response.text}")
+    
+    def wait_for_completion(self, job_id, max_wait=300):
+        """Wait for crawl to complete"""
+        start_time = time.time()
+        
+        while time.time() - start_time < max_wait:
+            status = self.get_crawl_status(job_id)
+            
+            print(f"Status: {status['status']} - "
+                  f"Progress: {status['current']}/{status['total']}")
+            
+            if status['status'] == 'completed':
+                return status
+            elif status['status'] == 'failed':
+                raise Exception(f"Crawl failed: {status.get('error')}")
+            
+            time.sleep(5)
+        
+        raise Exception("Crawl timed out")
+
+# Usage
+crawler = WebHarvestCrawler("wh_your_api_key")
+
+# Start crawl
+job_id = crawler.start_crawl("https://docs.example.com")
+print(f"Started crawl job: {job_id}")
+
+# Wait for completion
+result = crawler.wait_for_completion(job_id)
+print(f"Crawl completed! Found {len(result['data'])} pages")</code></pre>
+                        </div>
+                        <div id="js-crawl" class="tab-content">
+                            <pre><code class="language-javascript">class WebHarvestCrawler {
+  constructor(apiKey, baseUrl = 'http://localhost:8080') {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async startCrawl(url, options = {}) {
+    const crawlConfig = {
+      url,
+      limit: 100,
+      maxDepth: 3,
+      includePaths: ['^/docs/.*'],
+      excludePaths: ['.*\\.pdf$', '.*/private/.*'],
+      allowBackwardLinks: false,
+      allowExternalLinks: false,
+      ...options
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/crawl`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(crawlConfig)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to start crawl: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.jobId;
+  }
+
+  async getCrawlStatus(jobId) {
+    const response = await fetch(`${this.baseUrl}/v2/crawl/${jobId}`, {
+      headers: this.headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get status: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async waitForCompletion(jobId, maxWait = 300000) {
+    const startTime = Date.now();
+    const pollInterval = 5000;
+
+    while (Date.now() - startTime < maxWait) {
+      const status = await this.getCrawlStatus(jobId);
+      
+      console.log(`Status: ${status.status} - Progress: ${status.current}/${status.total}`);
+      
+      if (status.status === 'completed') {
+        return status;
+      } else if (status.status === 'failed') {
+        throw new Error(`Crawl failed: ${status.error}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    throw new Error('Crawl timed out');
+  }
+}
+
+// Usage example
+async function crawlWebsite() {
+  const crawler = new WebHarvestCrawler('wh_your_api_key');
+  
+  try {
+    // Start crawl
+    const jobId = await crawler.startCrawl('https://docs.example.com');
+    console.log(`Started crawl job: ${jobId}`);
+    
+    // Wait for completion
+    const result = await crawler.waitForCompletion(jobId);
+    console.log(`Crawl completed! Found ${result.data.length} pages`);
+    
+    return result;
+  } catch (error) {
+    console.error('Crawl failed:', error);
+    throw error;
+  }
+}
+
+// Run the crawl
+crawlWebsite();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP Integration -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">🤖 MCP Integration</h3>
+                <p class="text-gray-600 mb-4">Model Context Protocol tools for AI assistants</p>
+                
+                <div class="code-example mb-4">
+                    <div class="code-tabs">
+                        <div class="flex">
+                            <button class="tab-button active" data-tab="mcp-tools">Available Tools</button>
+                            <button class="tab-button" data-tab="mcp-usage">Usage Example</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <div id="mcp-tools" class="tab-content active">
+                            <pre><code class="language-json">{
+  "tools": [
+    {
+      "name": "scrape_url",
+      "description": "Scrape content from a single URL",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"},
+          "formats": {"type": "array", "items": {"type": "string"}},
+          "onlyMainContent": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "crawl_site",
+      "description": "Crawl an entire website",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"},
+          "limit": {"type": "integer"},
+          "maxDepth": {"type": "integer"}
+        }
+      }
+    },
+    {
+      "name": "get_crawl_status",
+      "description": "Check crawl job status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "jobId": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "map_site",
+      "description": "Get site URL map without content",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"},
+          "limit": {"type": "integer"}
+        }
+      }
+    }
+  ]
+}</code></pre>
+                        </div>
+                        <div id="mcp-usage" class="tab-content">
+                            <pre><code class="language-python"># MCP Client Example for Claude
+import json
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async def use_webharvest_mcp():
+    # Connect to WebHarvest MCP server
+    server_params = StdioServerParameters(
+        command="python",
+        args=["-m", "webharvest.mcp_server"],
+        env={"WEBHARVEST_API_KEY": "wh_your_api_key"}
+    )
+    
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            
+            # Initialize the client
+            await session.initialize()
+            
+            # List available tools
+            tools = await session.list_tools()
+            print("Available tools:", [tool.name for tool in tools.tools])
+            
+            # Use scrape_url tool
+            scrape_result = await session.call_tool(
+                "scrape_url",
+                {
+                    "url": "https://example.com",
+                    "formats": ["markdown", "links"],
+                    "onlyMainContent": True
+                }
+            )
+            
+            print("Scrape result:", scrape_result.content[0].text)
+            
+            # Start a crawl
+            crawl_result = await session.call_tool(
+                "crawl_site",
+                {
+                    "url": "https://docs.example.com",
+                    "limit": 50,
+                    "maxDepth": 2
+                }
+            )
+            
+            job_id = json.loads(crawl_result.content[0].text)["jobId"]
+            print(f"Started crawl job: {job_id}")
+            
+            # Check status periodically
+            while True:
+                status_result = await session.call_tool(
+                    "get_crawl_status",
+                    {"jobId": job_id}
+                )
+                
+                status = json.loads(status_result.content[0].text)
+                print(f"Crawl status: {status['status']}")
+                
+                if status['status'] in ['completed', 'failed']:
+                    break
+                
+                await asyncio.sleep(5)
+
+# Run the MCP example
+asyncio.run(use_webharvest_mcp())</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WebClone Pro API Section -->
+        <section id="webclone" class="section hidden">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-4">🎨 WebClone Pro API Examples</h2>
+                <p class="text-gray-600 mb-6">AI-native website cloning and creation platform</p>
+            </div>
+
+            <!-- Create Project -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">🚀 Create Cloning Project</h3>
+                <p class="text-gray-600 mb-4">Start an AI-powered website cloning project</p>
+                
+                <div class="code-example mb-4">
+                    <div class="code-tabs">
+                        <div class="flex">
+                            <button class="tab-button active" data-tab="curl-project">cURL</button>
+                            <button class="tab-button" data-tab="python-project">Python</button>
+                            <button class="tab-button" data-tab="js-project">JavaScript</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <div id="curl-project" class="tab-content active">
+                            <pre><code class="language-bash">curl -X POST "https://api.webclonepro.com/v2/projects" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Modern Portfolio Website",
+    "sourceUrl": "https://example-portfolio.com",
+    "framework": "nextjs",
+    "options": {
+      "extractAnimations": true,
+      "optimizeImages": true,
+      "generateTests": false,
+      "aiEnhancements": {
+        "improveAccessibility": true,
+        "optimizePerformance": true,
+        "modernizeDesign": false
+      }
+    }
+  }'</code></pre>
+                        </div>
+                        <div id="python-project" class="tab-content">
+                            <pre><code class="language-python">import requests
+import time
+import json
+
+class WebCloneProClient:
+    def __init__(self, api_key, base_url="https://api.webclonepro.com"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    def create_project(self, name, source_url, framework="react", **options):
+        """Create a new cloning project"""
+        project_data = {
+            "name": name,
+            "sourceUrl": source_url,
+            "framework": framework,
+            "options": {
+                "extractAnimations": True,
+                "optimizeImages": True,
+                "generateTests": False,
+                "aiEnhancements": {
+                    "improveAccessibility": True,
+                    "optimizePerformance": True,
+                    "modernizeDesign": False
+                },
+                **options
+            }
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/projects",
+            headers=self.headers,
+            json=project_data
+        )
+        
+        if response.status_code == 201:
+            return response.json()
+        else:
+            raise Exception(f"Failed to create project: {response.text}")
+    
+    def get_project_status(self, project_id):
+        """Get project cloning status"""
+        response = requests.get(
+            f"{self.base_url}/v2/projects/{project_id}",
+            headers=self.headers
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to get project: {response.text}")
+    
+    def wait_for_completion(self, project_id, max_wait=600):
+        """Wait for project to complete"""
+        start_time = time.time()
+        
+        while time.time() - start_time < max_wait:
+            project = self.get_project_status(project_id)
+            
+            print(f"Status: {project['status']} - "
+                  f"Progress: {project['progress']}%")
+            
+            if project['status'] == 'completed':
+                return project
+            elif project['status'] == 'failed':
+                raise Exception(f"Project failed: {project.get('error')}")
+            
+            time.sleep(10)
+        
+        raise Exception("Project timed out")
+
+# Usage
+client = WebCloneProClient("YOUR_JWT_TOKEN")
+
+# Create project
+project = client.create_project(
+    name="Modern Portfolio Website",
+    source_url="https://example-portfolio.com",
+    framework="nextjs"
+)
+
+print(f"Created project: {project['id']}")
+
+# Wait for completion
+completed_project = client.wait_for_completion(project['id'])
+print(f"Project completed! {len(completed_project['components'])} components extracted")</code></pre>
+                        </div>
+                        <div id="js-project" class="tab-content">
+                            <pre><code class="language-javascript">class WebCloneProClient {
+  constructor(apiKey, baseUrl = 'https://api.webclonepro.com') {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createProject(name, sourceUrl, framework = 'react', options = {}) {
+    const projectData = {
+      name,
+      sourceUrl,
+      framework,
+      options: {
+        extractAnimations: true,
+        optimizeImages: true,
+        generateTests: false,
+        aiEnhancements: {
+          improveAccessibility: true,
+          optimizePerformance: true,
+          modernizeDesign: false
+        },
+        ...options
+      }
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/projects`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(projectData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create project: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getProjectStatus(projectId) {
+    const response = await fetch(`${this.baseUrl}/v2/projects/${projectId}`, {
+      headers: this.headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get project: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async waitForCompletion(projectId, maxWait = 600000) {
+    const startTime = Date.now();
+    const pollInterval = 10000;
+
+    while (Date.now() - startTime < maxWait) {
+      const project = await this.getProjectStatus(projectId);
+      
+      console.log(`Status: ${project.status} - Progress: ${project.progress}%`);
+      
+      if (project.status === 'completed') {
+        return project;
+      } else if (project.status === 'failed') {
+        throw new Error(`Project failed: ${project.error}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    throw new Error('Project timed out');
+  }
+}
+
+// Usage example
+async function cloneWebsite() {
+  const client = new WebCloneProClient('YOUR_JWT_TOKEN');
+  
+  try {
+    // Create project
+    const project = await client.createProject(
+      'Modern Portfolio Website',
+      'https://example-portfolio.com',
+      'nextjs'
+    );
+    
+    console.log(`Created project: ${project.id}`);
+    
+    // Wait for completion
+    const completedProject = await client.waitForCompletion(project.id);
+    console.log(`Project completed! ${completedProject.components.length} components extracted`);
+    
+    return completedProject;
+  } catch (error) {
+    console.error('Project failed:', error);
+    throw error;
+  }
+}
+
+// Run the cloning
+cloneWebsite();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Processing -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">📄 PDF Processing & RAG</h3>
+                <p class="text-gray-600 mb-4">Upload and analyze PDF documents with AI</p>
+                
+                <div class="code-example mb-4">
+                    <div class="code-tabs">
+                        <div class="flex">
+                            <button class="tab-button active" data-tab="curl-pdf">cURL</button>
+                            <button class="tab-button" data-tab="python-pdf">Python</button>
+                            <button class="tab-button" data-tab="js-pdf">JavaScript</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <div id="curl-pdf" class="tab-content active">
+                            <pre><code class="language-bash"># Upload PDF
+curl -X POST "https://api.webclonepro.com/v2/pdf/upload" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@document.pdf"
+
+# Query documents
+curl -X POST "https://api.webclonepro.com/v2/pdf/query" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What are the main features of this product?",
+    "documentIds": ["doc-uuid-here"]
+  }'</code></pre>
+                        </div>
+                        <div id="python-pdf" class="tab-content">
+                            <pre><code class="language-python">import requests
+from pathlib import Path
+
+class PDFProcessor:
+    def __init__(self, api_key, base_url="https://api.webclonepro.com"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}"
+        }
+    
+    def upload_pdf(self, file_path):
+        """Upload a PDF document"""
+        with open(file_path, 'rb') as f:
+            files = {'file': f}
+            response = requests.post(
+                f"{self.base_url}/v2/pdf/upload",
+                headers=self.headers,
+                files=files
+            )
+        
+        if response.status_code == 200:
+            return response.json()['document']
+        else:
+            raise Exception(f"Upload failed: {response.text}")
+    
+    def query_documents(self, query, document_ids=None):
+        """Query documents with natural language"""
+        query_data = {
+            "query": query,
+            "documentIds": document_ids
+        }
+        
+        headers = {**self.headers, "Content-Type": "application/json"}
+        response = requests.post(
+            f"{self.base_url}/v2/pdf/query",
+            headers=headers,
+            json=query_data
+        )
+        
+        if response.status_code == 200:
+            return response.json()['result']
+        else:
+            raise Exception(f"Query failed: {response.text}")
+    
+    def list_documents(self):
+        """List all uploaded documents"""
+        response = requests.get(
+            f"{self.base_url}/v2/pdf/upload",
+            headers=self.headers
+        )
+        
+        if response.status_code == 200:
+            return response.json()['documents']
+        else:
+            raise Exception(f"List failed: {response.text}")
+
+# Usage
+processor = PDFProcessor("YOUR_JWT_TOKEN")
+
+# Upload PDF
+document = processor.upload_pdf("important_doc.pdf")
+print(f"Uploaded: {document['filename']} (ID: {document['id']})")
+
+# Query the document
+result = processor.query_documents(
+    "What are the main features mentioned?",
+    [document['id']]
+)
+
+print(f"Answer: {result['answer']}")
+print(f"Sources: {len(result['sources'])} relevant chunks found")
+print(f"Cost: {result['creditsUsed']} credits")</code></pre>
+                        </div>
+                        <div id="js-pdf" class="tab-content">
+                            <pre><code class="language-javascript">class PDFProcessor {
+  constructor(apiKey, baseUrl = 'https://api.webclonepro.com') {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${apiKey}`
+    };
+  }
+
+  async uploadPDF(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseUrl}/v2/pdf/upload`, {
+      method: 'POST',
+      headers: this.headers,
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.document;
+  }
+
+  async queryDocuments(query, documentIds = null) {
+    const queryData = {
+      query,
+      documentIds
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/pdf/query`, {
+      method: 'POST',
+      headers: {
+        ...this.headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(queryData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Query failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.result;
+  }
+
+  async listDocuments() {
+    const response = await fetch(`${this.baseUrl}/v2/pdf/upload`, {
+      headers: this.headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`List failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.documents;
+  }
+}
+
+// Usage example
+async function processPDF() {
+  const processor = new PDFProcessor('YOUR_JWT_TOKEN');
+  
+  try {
+    // Upload PDF (assuming file input element)
+    const fileInput = document.getElementById('pdf-file');
+    const file = fileInput.files[0];
+    
+    const document = await processor.uploadPDF(file);
+    console.log(`Uploaded: ${document.filename} (ID: ${document.id})`);
+    
+    // Query the document
+    const result = await processor.queryDocuments(
+      'What are the main features mentioned?',
+      [document.id]
+    );
+    
+    console.log(`Answer: ${result.answer}`);
+    console.log(`Sources: ${result.sources.length} relevant chunks found`);
+    console.log(`Cost: ${result.creditsUsed} credits`);
+    
+    return result;
+  } catch (error) {
+    console.error('PDF processing failed:', error);
+    throw error;
+  }
+}
+
+// HTML file input handler
+document.getElementById('process-pdf').addEventListener('click', processPDF);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Section -->
+        <section id="authentication" class="section hidden">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-4">🔐 Authentication Guide</h2>
+                <p class="text-gray-600 mb-6">Learn how to authenticate with both APIs</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- WebHarvest Auth -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">🕷️ WebHarvest Authentication</h3>
+                    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <p class="text-sm text-blue-800">
+                            <strong>API Key Format:</strong> <code>wh_</code> followed by 32 characters<br>
+                            <strong>Header:</strong> <code>Authorization: Bearer wh_your_api_key</code>
+                        </p>
+                    </div>
+                    
+                    <div class="code-example">
+                        <div class="relative">
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="far fa-copy"></i> Copy
+                            </button>
+                            <pre><code class="language-python"># WebHarvest authentication example
+import requests
+
+# Your API key (get from WebHarvest dashboard)
+API_KEY = "wh_1234567890abcdef1234567890abcdef"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+# Test authentication
+response = requests.get(
+    "http://localhost:8080/v2/health",
+    headers=headers
+)
+
+if response.status_code == 200:
+    print("✅ Authentication successful")
+else:
+    print("❌ Authentication failed")</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WebClone Pro Auth -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">🎨 WebClone Pro Authentication</h3>
+                    <div class="bg-purple-50 p-4 rounded-lg mb-4">
+                        <p class="text-sm text-purple-800">
+                            <strong>Token Type:</strong> JWT (JSON Web Token)<br>
+                            <strong>Header:</strong> <code>Authorization: Bearer jwt_token</code><br>
+                            <strong>Expires:</strong> 24 hours (use refresh token)
+                        </p>
+                    </div>
+                    
+                    <div class="code-example">
+                        <div class="relative">
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="far fa-copy"></i> Copy
+                            </button>
+                            <pre><code class="language-python"># WebClone Pro authentication example
+import requests
+import json
+
+# Login to get JWT token
+login_data = {
+    "email": "user@example.com",
+    "password": "your_password"
+}
+
+response = requests.post(
+    "https://api.webclonepro.com/v2/auth/login",
+    json=login_data
+)
+
+if response.status_code == 200:
+    tokens = response.json()['tokens']
+    access_token = tokens['access_token']
+    refresh_token = tokens['refresh_token']
+    
+    # Use access token for API calls
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    print("✅ Login successful")
+else:
+    print("❌ Login failed")</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflows Section -->
+        <section id="workflows" class="section hidden">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-4">🔄 Complete Workflows</h2>
+                <p class="text-gray-600 mb-6">End-to-end examples combining both platforms</p>
+            </div>
+
+            <!-- Workflow 1: Content Migration -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">📦 Content Migration Workflow</h3>
+                <p class="text-gray-600 mb-4">Scrape content with WebHarvest, then clone and enhance with WebClone Pro</p>
+                
+                <div class="code-example">
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <pre><code class="language-python">import asyncio
+from webharvest_client import WebHarvestClient
+from webclone_client import WebCloneProClient
+
+async def migrate_website_content():
+    """Complete workflow: Scrape → Analyze → Clone → Enhance"""
+    
+    # Initialize clients
+    harvester = WebHarvestClient("wh_your_api_key")
+    cloner = WebCloneProClient("your_jwt_token")
+    
+    source_url = "https://old-site.com"
+    
+    # Step 1: Crawl the source website
+    print("🕷️ Step 1: Crawling source website...")
+    crawl_job = harvester.start_crawl(
+        url=source_url,
+        limit=500,
+        maxDepth=4,
+        formats=["markdown", "html", "links", "images"]
+    )
+    
+    crawl_result = await harvester.wait_for_completion(crawl_job)
+    print(f"✅ Crawled {len(crawl_result['data'])} pages")
+    
+    # Step 2: Analyze content structure
+    print("🔍 Step 2: Analyzing content structure...")
+    content_analysis = analyze_crawl_data(crawl_result['data'])
+    
+    # Step 3: Create cloning project
+    print("🎨 Step 3: Creating cloning project...")
+    project = cloner.create_project(
+        name="Migrated Website",
+        source_url=source_url,
+        framework="nextjs",
+        options={
+            "extractAnimations": True,
+            "optimizeImages": True,
+            "aiEnhancements": {
+                "improveAccessibility": True,
+                "optimizePerformance": True,
+                "modernizeDesign": True
+            }
+        }
+    )
+    
+    clone_result = await cloner.wait_for_completion(project['id'])
+    print(f"✅ Cloned with {len(clone_result['components'])} components")
+    
+    # Step 4: Process documents for RAG
+    print("📚 Step 4: Processing documents for AI search...")
+    pdf_docs = extract_pdf_documents(crawl_result['data'])
+    processed_docs = []
+    
+    for pdf_path in pdf_docs:
+        doc = await cloner.pdf_processor.upload_pdf(pdf_path)
+        processed_docs.append(doc)
+    
+    print(f"✅ Processed {len(processed_docs)} documents")
+    
+    # Step 5: Generate final report
+    report = {
+        "source_url": source_url,
+        "pages_crawled": len(crawl_result['data']),
+        "components_extracted": len(clone_result['components']),
+        "documents_processed": len(processed_docs),
+        "project_id": project['id'],
+        "estimated_credits_used": calculate_credits_used(crawl_result, clone_result),
+        "next_steps": [
+            "Review extracted components",
+            "Customize design and branding",
+            "Set up deployment pipeline",
+            "Configure AI chat for customer support"
+        ]
+    }
+    
+    print("\n📊 Migration Report:")
+    print(f"   • Pages crawled: {report['pages_crawled']}")
+    print(f"   • Components extracted: {report['components_extracted']}")
+    print(f"   • Documents processed: {report['documents_processed']}")
+    print(f"   • Credits used: {report['estimated_credits_used']}")
+    
+    return report
+
+def analyze_crawl_data(pages):
+    """Analyze crawled data for insights"""
+    analysis = {
+        "total_pages": len(pages),
+        "content_types": {},
+        "common_patterns": [],
+        "avg_content_length": 0
+    }
+    
+    total_length = 0
+    for page in pages:
+        content_type = detect_content_type(page)
+        analysis["content_types"][content_type] = analysis["content_types"].get(content_type, 0) + 1
+        total_length += len(page.get('markdown', ''))
+    
+    analysis["avg_content_length"] = total_length // len(pages)
+    return analysis
+
+def extract_pdf_documents(pages):
+    """Extract PDF documents from crawled pages"""
+    pdf_docs = []
+    for page in pages:
+        for link in page.get('links', []):
+            if link.get('href', '').endswith('.pdf'):
+                pdf_docs.append(link['href'])
+    return pdf_docs
+
+def calculate_credits_used(crawl_result, clone_result):
+    """Estimate credits used for the workflow"""
+    base_crawl_cost = len(crawl_result['data']) * 2
+    base_clone_cost = len(clone_result['components']) * 10
+    ai_enhancement_cost = 50
+    return base_crawl_cost + base_clone_cost + ai_enhancement_cost
+
+# Run the migration
+if __name__ == "__main__":
+    asyncio.run(migrate_website_content())</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow 2: AI-Enhanced Documentation -->
+            <div class="mb-12">
+                <h3 class="text-2xl font-semibold mb-4">📚 AI-Enhanced Documentation</h3>
+                <p class="text-gray-600 mb-4">Create intelligent documentation with search and chat capabilities</p>
+                
+                <div class="code-example">
+                    <div class="relative">
+                        <button class="copy-button" onclick="copyCode(this)">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                        <pre><code class="language-python">async def create_ai_documentation():
+    """Build intelligent documentation with AI search"""
+    
+    harvester = WebHarvestClient("wh_your_api_key")
+    cloner = WebCloneProClient("your_jwt_token")
+    
+    # Step 1: Scrape documentation sites
+    doc_sites = [
+        "https://docs.example.com",
+        "https://api.example.com/docs",
+        "https://help.example.com"
+    ]
+    
+    all_content = []
+    for site in doc_sites:
+        print(f"📖 Scraping {site}...")
+        crawl_job = harvester.start_crawl(
+            url=site,
+            limit=1000,
+            maxDepth=5,
+            includePaths=["^/docs/.*", "^/api/.*", "^/help/.*"],
+            formats=["markdown", "html"]
+        )
+        
+        result = await harvester.wait_for_completion(crawl_job)
+        all_content.extend(result['data'])
+    
+    print(f"✅ Collected {len(all_content)} documentation pages")
+    
+    # Step 2: Create knowledge base project
+    print("🧠 Creating AI knowledge base...")
+    kb_project = cloner.create_project(
+        name="AI Documentation Hub",
+        source_url="https://docs.example.com",
+        framework="nextjs",
+        options={
+            "aiEnhancements": {
+                "generateSearchInterface": True,
+                "createChatbot": True,
+                "improveNavigation": True
+            }
+        }
+    )
+    
+    # Step 3: Process content for RAG
+    print("🔍 Processing content for AI search...")
+    knowledge_chunks = []
+    
+    for page in all_content:
+        # Split content into chunks
+        chunks = split_content_into_chunks(page['markdown'])
+        
+        for chunk in chunks:
+            knowledge_chunks.append({
+                "content": chunk,
+                "source": page['url'],
+                "title": page.get('title', ''),
+                "section": extract_section_heading(chunk)
+            })
+    
+    # Upload to vector database
+    for i, chunk in enumerate(knowledge_chunks):
+        if i % 100 == 0:
+            print(f"   Processed {i}/{len(knowledge_chunks)} chunks...")
+        
+        # This would use WebClone Pro's vector storage
+        await cloner.knowledge_base.add_chunk(
+            content=chunk['content'],
+            metadata=chunk
+        )
+    
+    print(f"✅ Indexed {len(knowledge_chunks)} knowledge chunks")
+    
+    # Step 4: Create chat interface
+    print("💬 Setting up AI chat interface...")
+    chat_config = {
+        "model": "gpt-4",
+        "system_prompt": """You are a helpful documentation assistant. 
+        Answer questions using only the provided documentation content. 
+        Always cite your sources and provide links when possible.""",
+        "knowledge_base_id": kb_project['id'],
+        "features": {
+            "semantic_search": True,
+            "source_citations": True,
+            "suggested_questions": True
+        }
+    }
+    
+    chat_interface = await cloner.create_chat_interface(chat_config)
+    
+    # Step 5: Test the system
+    print("🧪 Testing AI documentation system...")
+    test_questions = [
+        "How do I get started with the API?",
+        "What authentication methods are supported?",
+        "Can you explain the rate limiting policy?",
+        "How do I handle errors in the API responses?"
+    ]
+    
+    for question in test_questions:
+        response = await cloner.query_knowledge_base(
+            question=question,
+            knowledge_base_id=kb_project['id']
+        )
+        
+        print(f"❓ {question}")
+        print(f"💡 {response['answer'][:100]}...")
+        print(f"📚 Sources: {len(response['sources'])}")
+        print()
+    
+    # Generate deployment package
+    deployment_package = await cloner.export_project(
+        project_id=kb_project['id'],
+        format="nextjs",
+        include_ai_features=True
+    )
+    
+    print("🚀 AI Documentation System Ready!")
+    print(f"   • Project ID: {kb_project['id']}")
+    print(f"   • Knowledge chunks: {len(knowledge_chunks)}")
+    print(f"   • Chat interface: {chat_interface['endpoint']}")
+    print(f"   • Deployment package: {deployment_package['download_url']}")
+    
+    return {
+        "project": kb_project,
+        "knowledge_chunks": len(knowledge_chunks),
+        "chat_interface": chat_interface,
+        "deployment": deployment_package
+    }
+
+def split_content_into_chunks(content, chunk_size=1000, overlap=200):
+    """Split content into overlapping chunks for better retrieval"""
+    words = content.split()
+    chunks = []
+    
+    for i in range(0, len(words), chunk_size - overlap):
+        chunk = ' '.join(words[i:i + chunk_size])
+        chunks.append(chunk)
+    
+    return chunks
+
+def extract_section_heading(chunk):
+    """Extract section heading from chunk"""
+    lines = chunk.split('\n')
+    for line in lines:
+        if line.startswith('#'):
+            return line.strip('# ')
+    return "General"
+
+# Run the documentation builder
+if __name__ == "__main__":
+    asyncio.run(create_ai_documentation())</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Code tab switching
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    const container = this.closest('.code-example');
+                    
+                    // Update active tab button
+                    container.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update active tab content
+                    container.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    container.querySelector(`#${tabId}`).classList.add('active');
+                });
+            });
+            
+            // Section navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const sectionId = this.getAttribute('data-section');
+                    
+                    // Update active nav tab
+                    document.querySelectorAll('.nav-tab').forEach(t => {
+                        t.classList.remove('active', 'border-blue-500');
+                        t.classList.add('border-transparent');
+                    });
+                    this.classList.add('active', 'border-blue-500');
+                    this.classList.remove('border-transparent');
+                    
+                    // Update active section
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.classList.add('hidden');
+                        section.classList.remove('active');
+                    });
+                    const targetSection = document.getElementById(sectionId);
+                    if (targetSection) {
+                        targetSection.classList.remove('hidden');
+                        targetSection.classList.add('active');
+                    }
+                });
+            });
+        });
+        
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement.querySelector('.tab-content.active code');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // API Testing functionality
+        document.getElementById('test-scrape')?.addEventListener('click', async function() {
+            const button = this;
+            const apiKey = document.getElementById('scrape-api-key').value;
+            const url = document.getElementById('scrape-url').value;
+            const responseDiv = document.getElementById('scrape-response');
+            
+            if (!apiKey || !url) {
+                alert('Please provide both API key and URL');
+                return;
+            }
+            
+            // Show loading state
+            button.disabled = true;
+            button.querySelector('.button-text').textContent = 'Testing...';
+            button.querySelector('.spinner').classList.remove('hidden');
+            
+            try {
+                const response = await fetch('http://localhost:8080/v2/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        formats: ['markdown', 'links'],
+                        onlyMainContent: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Display response
+                responseDiv.innerHTML = `
+                    <div class="mb-2">
+                        <span class="status-${response.status >= 200 && response.status < 300 ? '200' : response.status >= 400 ? '400' : 'error'}">
+                            Status: ${response.status} ${response.statusText}
+                        </span>
+                    </div>
+                    <pre class="text-xs overflow-auto">${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="text-red-500 mb-2">Error: ${error.message}</div>
+                    <div class="text-sm text-gray-400">
+                        Make sure WebHarvest is running at http://localhost:8080 and CORS is configured.
+                    </div>
+                `;
+            } finally {
+                // Reset button state
+                button.disabled = false;
+                button.querySelector('.button-text').textContent = '🚀 Test Scrape';
+                button.querySelector('.spinner').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

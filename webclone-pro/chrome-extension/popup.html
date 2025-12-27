@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebClone Pro Extractor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">🚀</span>
+        <span class="logo-text">WebClone Pro</span>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Ready</span>
+      </div>
+    </div>
+
+    <!-- Page Info -->
+    <div class="page-info" id="pageInfo">
+      <div class="info-row">
+        <span class="info-label">Current Page:</span>
+        <span class="info-value" id="pageTitle">Loading...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Detected:</span>
+        <div class="detected-items" id="detectedItems">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3 class="section-title">Quick Extract</h3>
+      
+      <button class="action-btn primary" id="extractAnimations">
+        <span class="btn-icon">✨</span>
+        <div class="btn-content">
+          <span class="btn-title">Extract Animations</span>
+          <span class="btn-desc">GSAP, CSS, Framer Motion</span>
+        </div>
+        <span class="btn-shortcut">⌘⇧A</span>
+      </button>
+
+      <button class="action-btn primary" id="extractDesign">
+        <span class="btn-icon">🎨</span>
+        <div class="btn-content">
+          <span class="btn-title">Extract Design System</span>
+          <span class="btn-desc">Colors, Typography, Spacing</span>
+        </div>
+        <span class="btn-shortcut">⌘⇧D</span>
+      </button>
+
+      <button class="action-btn success" id="clonePage">
+        <span class="btn-icon">📋</span>
+        <div class="btn-content">
+          <span class="btn-title">Clone Entire Page</span>
+          <span class="btn-desc">HTML, CSS, Assets</span>
+        </div>
+        <span class="btn-shortcut">⌘⇧C</span>
+      </button>
+    </div>
+
+    <!-- Advanced Options -->
+    <div class="advanced-section">
+      <h3 class="section-title">Advanced Extraction</h3>
+      
+      <div class="option-group">
+        <label class="option">
+          <input type="checkbox" id="extractInteractions">
+          <span>Extract Interactions</span>
+        </label>
+        <label class="option">
+          <input type="checkbox" id="extractResponsive">
+          <span>Include Responsive Styles</span>
+        </label>
+        <label class="option">
+          <input type="checkbox" id="extractAssets">
+          <span>Download Assets</span>
+        </label>
+        <label class="option">
+          <input type="checkbox" id="minifyCode">
+          <span>Minify Output</span>
+        </label>
+      </div>
+
+      <div class="export-format">
+        <label class="label">Export Format:</label>
+        <select id="exportFormat">
+          <option value="react">React + Tailwind</option>
+          <option value="vue">Vue + CSS</option>
+          <option value="html">Vanilla HTML/CSS/JS</option>
+          <option value="next">Next.js + Styled Components</option>
+          <option value="svelte">Svelte + CSS</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Extraction History -->
+    <div class="history-section">
+      <h3 class="section-title">Recent Extractions</h3>
+      <div class="history-list" id="historyList">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="footer">
+      <button class="footer-btn" id="openDashboard">
+        <span>Open Dashboard</span>
+      </button>
+      <button class="footer-btn" id="settings">
+        <span>Settings</span>
+      </button>
+    </div>
+
+    <!-- Progress Overlay -->
+    <div class="progress-overlay" id="progressOverlay">
+      <div class="progress-content">
+        <div class="progress-spinner"></div>
+        <div class="progress-text">Extracting...</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

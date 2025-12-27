@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  webharvest-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=${REDIS_URL}
+      - QDRANT_URL=http://qdrant:6333
+      - OPENWEBUI_BASE_URL=${OPENWEBUI_BASE_URL}
+      - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_CRAWL_PAGES=${MAX_CRAWL_PAGES}
+      - DEFAULT_RATE_LIMIT_PER_DOMAIN=${DEFAULT_RATE_LIMIT_PER_DOMAIN}
+      - DEFAULT_DELAY_MS=${DEFAULT_DELAY_MS}
+      - RESPECT_ROBOTS_TXT=${RESPECT_ROBOTS_TXT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - webharvest
+
+  webharvest-worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - QDRANT_URL=http://qdrant:6333
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-4}
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - DEFAULT_TIMEOUT=${DEFAULT_TIMEOUT}
+      - MAX_ACTIONS_PER_REQUEST=${MAX_ACTIONS_PER_REQUEST}
+      - MAX_ACTION_TIME=${MAX_ACTION_TIME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    volumes:
+      - playwright_cache:/ms-playwright
+      - ./data/screenshots:/app/screenshots
+    networks:
+      - webharvest
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "3000:8080"
+    environment:
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - DATA_DIR=/app/backend/data
+      - ENABLE_SIGNUP=true
+      - DEFAULT_MODELS=gpt-3.5-turbo,gpt-4
+      - OPENAI_API_BASE_URL=http://webharvest-api:8080/v1
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-dummy}
+    volumes:
+      - openwebui_data:/app/backend/data
+    restart: unless-stopped
+    depends_on:
+      - webharvest-api
+    networks:
+      - webharvest
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./scripts/seed-data.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - webharvest
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - webharvest
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - webharvest
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - webharvest-api
+      - openwebui
+    restart: unless-stopped
+    networks:
+      - webharvest
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  openwebui_data:
+  playwright_cache:
+
+networks:
+  webharvest:
+    driver: bridge

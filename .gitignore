@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker volumes
+postgres_data/
+redis_data/
+qdrant_data/
+openobserve_data/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Claude specific
+.claude/
+
+# Downloaded/cloned sites
+cloned_sites/
+downloaded_sites/
+perfect_clone/
+
+# Python
+venv/
+*.egg-info/
+.Python
+
+# OS files
+Thumbs.db
+EOF < /dev/null

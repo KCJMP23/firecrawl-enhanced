@@ -1,0 +1,1093 @@
+openapi: 3.0.0
+info:
+  title: WebClone Pro 2026 API
+  version: 2.0.0
+  description: |
+    # WebClone Pro 2026 API Documentation
+    
+    Next-generation AI-native website cloning and creation platform with advanced PDF processing, real-time collaboration, and intelligent cost optimization.
+    
+    ## Features
+    - 🚀 AI-powered website cloning and customization
+    - 📄 Advanced PDF processing with RAG capabilities
+    - 💰 Intelligent cost optimization for AI operations
+    - 🎨 Animation extraction and redesign
+    - 👥 Real-time collaboration
+    - 📊 Usage analytics and billing management
+    
+    ## Authentication
+    
+    The API uses Bearer token authentication. Include your API key in the Authorization header:
+    
+    ```
+    Authorization: Bearer YOUR_API_KEY
+    ```
+    
+    ## Rate Limiting
+    
+    - **Starter Plan**: 1,000 requests/hour
+    - **Pro Plan**: 10,000 requests/hour  
+    - **Enterprise Plan**: 100,000 requests/hour
+    
+    Rate limit headers are included in all responses:
+    - `X-RateLimit-Limit`: Request limit per hour
+    - `X-RateLimit-Remaining`: Remaining requests
+    - `X-RateLimit-Reset`: Time when rate limit resets (Unix timestamp)
+    
+  contact:
+    name: WebClone Pro Support
+    email: support@webclonepro.com
+    url: https://webclonepro.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.webclonepro.com/v2
+    description: Production server
+  - url: https://staging-api.webclonepro.com/v2
+    description: Staging server
+  - url: http://localhost:3000/api
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User profile and account management
+  - name: Projects
+    description: Website cloning projects
+  - name: PDF Processing
+    description: Document intelligence and RAG
+  - name: Credits
+    description: AI credit management and billing
+  - name: Analytics
+    description: Usage analytics and optimization
+  - name: Collaboration
+    description: Real-time collaboration features
+  - name: Admin
+    description: Platform administration
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: |
+        Authenticate a user with email and password.
+        Returns access token and refresh token.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securePassword123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tokens:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      refresh_token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      expires_in:
+                        type: integer
+                        example: 3600
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Generate new access token using refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  expires_in:
+                    type: integer
+
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: Retrieve the current user's profile information
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update the current user's profile information
+      operationId: updateUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: List user projects
+      description: |
+        Retrieve a paginated list of user's website cloning projects.
+        Supports filtering by status and search.
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: Filter by project status
+          required: false
+          schema:
+            type: string
+            enum: [active, archived, processing, failed]
+        - name: search
+          in: query
+          description: Search projects by name or URL
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags:
+        - Projects
+      summary: Create new project
+      description: |
+        Create a new website cloning project from a URL.
+        Initiates AI-powered analysis and cloning process.
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    get:
+      tags:
+        - Projects
+      summary: Get project details
+      description: Retrieve detailed information about a specific project
+      operationId: getProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+
+    put:
+      tags:
+        - Projects
+      summary: Update project
+      description: Update project configuration and settings
+      operationId: updateProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Project updated successfully
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete project
+      description: Permanently delete a project and all associated data
+      operationId: deleteProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Project deleted successfully
+
+  /pdf/upload:
+    post:
+      tags:
+        - PDF Processing
+      summary: Upload PDF document
+      description: |
+        Upload a PDF document for AI processing and analysis.
+        Supports files up to 50MB with automatic text extraction,
+        image analysis, and embedding generation.
+      operationId: uploadPDF
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to upload (max 50MB)
+      responses:
+        '200':
+          description: PDF uploaded and processing started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  document:
+                    $ref: '#/components/schemas/PDFDocument'
+
+    get:
+      tags:
+        - PDF Processing
+      summary: List PDF documents
+      description: Retrieve user's uploaded PDF documents
+      operationId: listPDFDocuments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PDFDocument'
+
+  /pdf/query:
+    post:
+      tags:
+        - PDF Processing
+      summary: Query documents with AI
+      description: |
+        Ask questions about uploaded documents using AI.
+        Supports semantic search across all documents or specific ones.
+      operationId: queryPDFDocuments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: Natural language question
+                  example: "What are the main topics discussed in the document?"
+                  maxLength: 1000
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Specific documents to search (optional, defaults to all)
+      responses:
+        '200':
+          description: Query processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    $ref: '#/components/schemas/QueryResult'
+
+  /credits/balance:
+    get:
+      tags:
+        - Credits
+      summary: Get credit balance
+      description: Retrieve current credit balance and usage information
+      operationId: getCreditBalance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Credit balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  balance:
+                    $ref: '#/components/schemas/CreditBalance'
+
+  /credits/purchase:
+    post:
+      tags:
+        - Credits
+      summary: Purchase credits
+      description: |
+        Initiate credit purchase through Stripe.
+        Returns Stripe checkout session for payment processing.
+      operationId: purchaseCredits
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - credits
+                - amount
+              properties:
+                credits:
+                  type: integer
+                  description: Number of credits to purchase
+                  enum: [1000, 5000, 15000]
+                amount:
+                  type: integer
+                  description: Price in cents
+                  enum: [2900, 9900, 19900]
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  sessionId:
+                    type: string
+                  url:
+                    type: string
+
+  /usage/analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Get usage analytics
+      description: |
+        Retrieve detailed usage analytics including costs,
+        tokens used, and feature breakdown.
+      operationId: getUsageAnalytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Analytics period in days
+          schema:
+            type: integer
+            default: 30
+            enum: [7, 30, 90]
+        - name: feature
+          in: query
+          description: Filter by specific feature
+          schema:
+            type: string
+            enum: [pdf-processing, ai-chat, website-cloning, design-analysis]
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageAnalytics'
+
+  /collaboration/sessions:
+    post:
+      tags:
+        - Collaboration
+      summary: Create collaboration session
+      description: Create a new real-time collaboration session for a project
+      operationId: createCollaborationSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                    enum: [view, edit, comment]
+      responses:
+        '201':
+          description: Collaboration session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollaborationSession'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          description: User's full name
+        avatar:
+          type: string
+          format: uri
+          description: Profile picture URL
+        plan:
+          type: string
+          enum: [starter, pro, enterprise]
+          description: Subscription plan
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            company:
+              type: string
+              description: Company name
+            website:
+              type: string
+              format: uri
+              description: Personal/company website
+            timezone:
+              type: string
+              description: User's timezone
+            preferences:
+              type: object
+              properties:
+                theme:
+                  type: string
+                  enum: [light, dark, auto]
+                notifications:
+                  type: object
+                  properties:
+                    email:
+                      type: boolean
+                    push:
+                      type: boolean
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        website:
+          type: string
+          format: uri
+        timezone:
+          type: string
+        preferences:
+          type: object
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Project name
+        sourceUrl:
+          type: string
+          format: uri
+          description: Original website URL
+        status:
+          type: string
+          enum: [processing, completed, failed, archived]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Processing progress percentage
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          properties:
+            framework:
+              type: string
+              description: Generated framework
+            components:
+              type: integer
+              description: Number of extracted components
+            animations:
+              type: integer
+              description: Number of extracted animations
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            components:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string
+                  code:
+                    type: string
+            animations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  css:
+                    type: string
+
+    ProjectCreate:
+      type: object
+      required:
+        - name
+        - sourceUrl
+      properties:
+        name:
+          type: string
+          description: Project name
+          minLength: 1
+          maxLength: 100
+        sourceUrl:
+          type: string
+          format: uri
+          description: Website URL to clone
+        framework:
+          type: string
+          enum: [react, vue, angular, svelte, nextjs, nuxt]
+          default: react
+          description: Target framework
+        options:
+          type: object
+          properties:
+            extractAnimations:
+              type: boolean
+              default: true
+            optimizeImages:
+              type: boolean
+              default: true
+            generateTests:
+              type: boolean
+              default: false
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+
+    PDFDocument:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+          description: Original filename
+        size:
+          type: integer
+          description: File size in bytes
+        uploadedAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [uploading, processing, completed, failed]
+        metadata:
+          type: object
+          properties:
+            pageCount:
+              type: integer
+            title:
+              type: string
+            author:
+              type: string
+        processingResult:
+          type: object
+          properties:
+            summary:
+              type: string
+            topics:
+              type: array
+              items:
+                type: string
+            keyEntities:
+              type: array
+              items:
+                type: string
+            chunks:
+              type: integer
+              description: Number of text chunks
+            images:
+              type: integer
+              description: Number of extracted images
+
+    QueryResult:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: AI-generated answer
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              documentId:
+                type: string
+                format: uuid
+              pageNumber:
+                type: integer
+              content:
+                type: string
+              relevanceScore:
+                type: number
+                minimum: 0
+                maximum: 1
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        chunksFound:
+          type: integer
+        tokensUsed:
+          type: integer
+        cost:
+          type: number
+        creditsUsed:
+          type: integer
+
+    CreditBalance:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [starter, pro, enterprise]
+        totalCredits:
+          type: integer
+          description: Monthly credit allowance
+        usedCredits:
+          type: integer
+          description: Credits used this month
+        remainingCredits:
+          type: integer
+          description: Credits remaining this month
+        purchasedCredits:
+          type: integer
+          description: Additional purchased credits
+        resetDate:
+          type: string
+          format: date-time
+          description: When monthly credits reset
+        monthlyPrice:
+          type: number
+          description: Monthly subscription price
+
+    UsageAnalytics:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            dailyUsage:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  tokens:
+                    type: integer
+                  cost:
+                    type: number
+                  credits:
+                    type: integer
+                  feature:
+                    type: string
+            featureBreakdown:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  tokens:
+                    type: integer
+                  cost:
+                    type: number
+                  credits:
+                    type: integer
+                  count:
+                    type: integer
+            totals:
+              type: object
+              properties:
+                tokens:
+                  type: integer
+                cost:
+                  type: number
+                credits:
+                  type: integer
+
+    CollaborationSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              permissions:
+                type: array
+                items:
+                  type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total:
+          type: integer
+          description: Total number of items
+        totalPages:
+          type: integer
+          description: Total number of pages
+        hasNext:
+          type: boolean
+          description: Whether there are more pages
+        hasPrev:
+          type: boolean
+          description: Whether there are previous pages
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            code: "AUTH_REQUIRED"
+            timestamp: "2024-01-01T00:00:00Z"
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Access denied"
+            code: "FORBIDDEN"
+            timestamp: "2024-01-01T00:00:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+            code: "NOT_FOUND"
+            timestamp: "2024-01-01T00:00:00Z"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  validationErrors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+          example:
+            error: "Validation failed"
+            code: "VALIDATION_ERROR"
+            validationErrors:
+              - field: "email"
+                message: "Invalid email format"
+            timestamp: "2024-01-01T00:00:00Z"
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per hour
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Time when rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Rate limit exceeded"
+            code: "RATE_LIMIT_EXCEEDED"
+            details:
+              limit: 1000
+              remaining: 0
+              resetTime: 1641024000
+            timestamp: "2024-01-01T00:00:00Z"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token authentication. Include the token in the Authorization header:
+        ```
+        Authorization: Bearer YOUR_JWT_TOKEN
+        ```

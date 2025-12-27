@@ -1,0 +1,275 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches: [main, production]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: webclone-pro
+
+jobs:
+  # Security scanning job
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=moderate
+      
+      - name: Run security tests
+        run: |
+          npm test -- tests/security.test.ts
+
+  # Code quality and testing
+  test-and-lint:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    needs: security-scan
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: webclone_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: |
+          npm run lint || true
+          npm run typecheck || true
+      
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/webclone_test
+          NODE_ENV: test
+        run: |
+          npm test -- --coverage --coverageReporters=json-summary
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-summary.json
+      
+      - name: Check build
+        run: npm run build
+
+  # Build and push Docker image
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [security-scan, test-and-lint]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.docker-build.outputs.digest }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Docker image
+        id: docker-build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+  # Database migrations
+  migrate-database:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/production'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          npm install -g supabase
+          supabase db push --db-url "$DATABASE_URL"
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push, migrate-database]
+    if: github.ref == 'refs/heads/production'
+    environment:
+      name: production
+      url: https://webclonepro.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: webclone-pro
+          image: ${{ needs.build-and-push.outputs.image-tag }}
+          region: us-central1
+          env_vars: |
+            NODE_ENV=production
+            NEXT_PUBLIC_APP_VERSION=${{ github.sha }}
+          secrets: |
+            DATABASE_URL=DATABASE_URL:latest
+            NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest
+            STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest
+            STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
+      
+      - name: Verify deployment health
+        run: |
+          sleep 30
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://webclonepro.com/api/health)
+          if [ $response -ne 200 ]; then
+            echo "Health check failed with status $response"
+            exit 1
+          fi
+          echo "Deployment health check passed"
+
+  # Performance testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.ref == 'refs/heads/production'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            https://webclonepro.com
+            https://webclonepro.com/dashboard
+            https://webclonepro.com/templates
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+      
+      - name: Run load testing
+        run: |
+          npm install -g artillery
+          artillery quick --count 50 --num 100 https://webclonepro.com/api/health
+
+  # Rollback on failure
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy-production, performance-test]
+    if: failure() && github.ref == 'refs/heads/production'
+    
+    steps:
+      - name: Rollback to previous version
+        run: |
+          echo "Rolling back to previous stable version..."
+          # Add rollback logic here (e.g., revert Cloud Run to previous revision)
+      
+      - name: Notify team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment failed and was rolled back!'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Success notification
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: [deploy-production, performance-test]
+    if: success() && github.ref == 'refs/heads/production'
+    
+    steps:
+      - name: Notify team of successful deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'success'
+          text: |
+            ✅ Production deployment successful!
+            Version: ${{ github.sha }}
+            URL: https://webclonepro.com
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

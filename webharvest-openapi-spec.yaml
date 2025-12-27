@@ -1,0 +1,1181 @@
+openapi: 3.0.3
+info:
+  title: WebHarvest API
+  description: |
+    Self-hosted web scraping platform with AI integration. WebHarvest provides powerful web crawling, scraping, and content extraction capabilities with built-in caching, batch processing, and AI-powered content analysis.
+
+    ## Key Features
+    - **Web Scraping**: Extract content from single URLs in various formats (Markdown, HTML, screenshots)
+    - **Web Crawling**: Discover and crawl entire websites with intelligent depth control
+    - **Batch Processing**: Process multiple URLs simultaneously for efficient data collection
+    - **Site Mapping**: Fast URL discovery without content extraction
+    - **Content Caching**: Intelligent caching system to reduce redundant requests
+    - **MCP Integration**: Model Context Protocol support for AI workflows
+    - **Project Management**: Organize and manage crawling projects
+    - **Real-time Monitoring**: Track job progress and health status
+    - **OpenWebUI Integration**: Sync content to knowledge collections
+
+    ## Authentication
+    All API endpoints (except health checks) require authentication using API keys.
+    Include the API key in the Authorization header as a Bearer token:
+    
+    ```
+    Authorization: Bearer wh_your_api_key_here
+    ```
+
+    ## Rate Limiting
+    - Default rate limit: 60 requests per minute per API key
+    - Configurable per API key
+    - 503 status returned when rate limit exceeded
+
+    ## Response Formats
+    All responses follow a consistent structure with `success` boolean and relevant data fields.
+    Error responses include detailed error information in the `error` and `message` fields.
+
+  version: 1.0.0
+  contact:
+    name: WebHarvest Support
+    url: https://github.com/firecrawl/webharvest
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.webharvest.dev
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Health check and monitoring endpoints
+  - name: Scraping
+    description: Single URL content extraction
+  - name: Crawling
+    description: Website discovery and crawling
+  - name: Mapping
+    description: Fast URL discovery without content extraction
+  - name: Batch
+    description: Bulk URL processing
+  - name: MCP
+    description: Model Context Protocol integration
+  - name: Projects
+    description: Project management and organization
+
+paths:
+  /:
+    get:
+      summary: API Information
+      description: Get basic information about the WebHarvest API including available endpoints
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: WebHarvest API
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  status:
+                    type: string
+                    example: operational
+                  endpoints:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  documentation:
+                    type: string
+                    example: /docs
+
+  /healthz:
+    get:
+      summary: Health Check
+      description: Basic health check endpoint for load balancers and monitoring
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /readyz:
+    get:
+      summary: Readiness Check
+      description: Comprehensive readiness check that validates all dependencies (database, redis, etc.)
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: All dependencies are healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
+        '503':
+          description: One or more dependencies are unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
+
+  /livez:
+    get:
+      summary: Liveness Check
+      description: Liveness probe for Kubernetes health monitoring
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /metrics:
+    get:
+      summary: Prometheus Metrics
+      description: Prometheus metrics endpoint for monitoring and observability
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics in text format
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v2/scrape:
+    post:
+      summary: Scrape URL
+      description: |
+        Scrape a single URL and return content in requested formats. 
+        Supports multiple output formats including Markdown, HTML, links, images, and screenshots.
+        
+        **Supported Formats:**
+        - `markdown`: Clean markdown content (default)
+        - `html`: Cleaned HTML
+        - `rawHtml`: Original HTML
+        - `links`: Extracted links
+        - `images`: Extracted images  
+        - `screenshot`: Page screenshot
+
+        **Caching:**
+        Results are automatically cached based on URL and request parameters.
+        Use `maxAge` to control cache behavior (0 to disable caching).
+      tags: [Scraping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrapeRequest'
+            examples:
+              basic_scrape:
+                summary: Basic markdown scraping
+                value:
+                  url: "https://example.com"
+                  formats: ["markdown"]
+              full_scrape:
+                summary: Full content extraction
+                value:
+                  url: "https://example.com"
+                  formats: ["markdown", "html", "links", "images"]
+                  onlyMainContent: true
+                  mobile: false
+                  timeout: 30000
+      responses:
+        '200':
+          description: Successfully scraped URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapeResponse'
+              examples:
+                success_response:
+                  summary: Successful scrape
+                  value:
+                    success: true
+                    data:
+                      markdown: "# Example Page\nThis is the content..."
+                      metadata:
+                        title: "Example Page"
+                        description: "An example page"
+                        sourceURL: "https://example.com"
+                        language: "en"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crawl:
+    post:
+      summary: Start Crawl
+      description: |
+        Start a crawl job to discover and scrape an entire website.
+        Returns immediately with a job ID for monitoring progress.
+        
+        **Features:**
+        - Configurable crawl depth and page limits
+        - Include/exclude path patterns using regex
+        - Sitemap discovery and processing
+        - Domain and subdomain control
+        - Rate limiting and concurrency control
+        - Webhook notifications for completion
+      tags: [Crawling]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrawlRequest'
+            examples:
+              basic_crawl:
+                summary: Basic website crawl
+                value:
+                  url: "https://docs.example.com"
+                  maxDiscoveryDepth: 3
+                  limit: 100
+              advanced_crawl:
+                summary: Advanced crawl with filtering
+                value:
+                  url: "https://docs.example.com"
+                  maxDiscoveryDepth: 5
+                  limit: 500
+                  includePaths: ["/docs/.*", "/api/.*"]
+                  excludePaths: ["/docs/old/.*"]
+                  crawlEntireDomain: true
+                  maxConcurrency: 3
+      responses:
+        '200':
+          description: Crawl job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlStartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crawl/{crawl_id}:
+    get:
+      summary: Get Crawl Status
+      description: |
+        Get the status and results of a crawl job.
+        Returns progress information and scraped pages for completed jobs.
+      tags: [Crawling]
+      parameters:
+        - name: crawl_id
+          in: path
+          required: true
+          description: Unique identifier of the crawl job
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Crawl status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlStatusResponse'
+        '404':
+          description: Crawl job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    
+    delete:
+      summary: Cancel Crawl
+      description: Cancel a running or queued crawl job
+      tags: [Crawling]
+      parameters:
+        - name: crawl_id
+          in: path
+          required: true
+          description: Unique identifier of the crawl job to cancel
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Crawl job canceled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlCancelResponse'
+        '404':
+          description: Crawl job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/map:
+    post:
+      summary: Map Website
+      description: |
+        Quickly discover all URLs on a website without extracting content.
+        Fast alternative to crawling when you only need URL discovery.
+        
+        **Features:**
+        - Sitemap processing for fast discovery
+        - Search filtering to find specific URLs
+        - Configurable result limits
+        - No content extraction for maximum speed
+      tags: [Mapping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapRequest'
+            examples:
+              basic_map:
+                summary: Basic site mapping
+                value:
+                  url: "https://docs.example.com"
+                  limit: 1000
+              filtered_map:
+                summary: Filtered mapping
+                value:
+                  url: "https://docs.example.com"
+                  search: "api"
+                  limit: 500
+                  ignoreSitemap: false
+      responses:
+        '200':
+          description: Site mapping completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/batch/scrape:
+    post:
+      summary: Start Batch Scrape
+      description: |
+        Start a batch scraping job to process multiple URLs simultaneously.
+        Efficient for scraping multiple pages with consistent configuration.
+        
+        **Features:**
+        - Concurrent processing with configurable concurrency
+        - Invalid URL filtering and reporting
+        - Webhook notifications for completion
+        - Progress tracking and error reporting
+      tags: [Batch]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchScrapeRequest'
+            examples:
+              basic_batch:
+                summary: Basic batch scraping
+                value:
+                  urls:
+                    - "https://example.com/page1"
+                    - "https://example.com/page2"
+                    - "https://example.com/page3"
+                  maxConcurrency: 5
+              advanced_batch:
+                summary: Batch with custom options
+                value:
+                  urls:
+                    - "https://example.com/page1"
+                    - "https://example.com/page2"
+                  ignoreInvalidURLs: true
+                  maxConcurrency: 10
+                  scrapeOptions:
+                    formats: ["markdown", "links"]
+                    onlyMainContent: true
+      responses:
+        '200':
+          description: Batch scrape job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchScrapeStartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/batch/scrape/{batch_id}:
+    get:
+      summary: Get Batch Status
+      description: Get the status and results of a batch scraping job
+      tags: [Batch]
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          description: Unique identifier of the batch job
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Batch status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStatusResponse'
+        '404':
+          description: Batch job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mcp:
+    get:
+      summary: MCP Server Info
+      description: Get information about the Model Context Protocol server capabilities
+      tags: [MCP]
+      security: []
+      responses:
+        '200':
+          description: MCP server information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPServerInfo'
+
+    post:
+      summary: MCP JSON-RPC Endpoint
+      description: |
+        Main endpoint for Model Context Protocol JSON-RPC communication.
+        Supports the full MCP specification for tool calling, resource access, and prompt management.
+        
+        **Available Tools:**
+        - `scrape_url`: Scrape single URLs
+        - `crawl_site`: Start website crawls
+        - `map_site`: Discover website URLs
+        - `batch_scrape`: Process multiple URLs
+        - `sync_crawl_to_openwebui_collection`: Sync to knowledge bases
+        - `create_project`: Create organization projects
+        
+        **Available Prompts:**
+        - `ingest_docs`: Complete documentation ingestion workflow
+        - `analyze_changes`: Compare crawls and detect changes
+      tags: [MCP]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPRequest'
+      responses:
+        '200':
+          description: MCP response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPResponse'
+        '400':
+          description: Invalid MCP request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        API key authentication using Bearer tokens.
+        Format: `Bearer wh_your_api_key_here`
+        
+        API keys must start with 'wh_' prefix and be obtained from your WebHarvest dashboard.
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Bad Request"
+            message: "Invalid URL format"
+    
+    Unauthorized:
+      description: Unauthorized - Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Unauthorized"
+            message: "Invalid or missing API key"
+    
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Rate Limited"
+            message: "API rate limit exceeded. Try again later."
+    
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+
+  schemas:
+    # Health and Status Schemas
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, alive]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      required: [status, timestamp]
+
+    ReadinessStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [status, checks, timestamp]
+
+    # Common Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Detailed error message
+      required: [success, error, message]
+
+    # Scraping Schemas
+    ScrapeRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL to scrape
+          example: "https://example.com"
+        formats:
+          type: array
+          items:
+            type: string
+            enum: [markdown, html, rawHtml, links, images, screenshot]
+          default: [markdown]
+          description: Output formats to return
+        onlyMainContent:
+          type: boolean
+          default: true
+          description: Extract only main content using readability algorithm
+        includeTags:
+          type: array
+          items:
+            type: string
+          description: HTML tags to include in extraction
+        excludeTags:
+          type: array
+          items:
+            type: string
+          description: HTML tags to exclude from extraction
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom HTTP headers to send with request
+        waitFor:
+          type: integer
+          minimum: 0
+          maximum: 30000
+          description: Wait time in milliseconds after page load
+        mobile:
+          type: boolean
+          default: false
+          description: Use mobile viewport for rendering
+        timeout:
+          type: integer
+          default: 30000
+          minimum: 5000
+          maximum: 120000
+          description: Request timeout in milliseconds
+        maxAge:
+          type: integer
+          default: 172800000
+          description: Cache max age in milliseconds (0 to disable)
+        actions:
+          type: array
+          items:
+            type: object
+          description: Browser actions to perform (clicks, typing, etc.)
+      required: [url]
+
+    ScrapeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            markdown:
+              type: string
+              description: Clean markdown content
+            html:
+              type: string
+              description: Cleaned HTML content
+            rawHtml:
+              type: string
+              description: Original raw HTML
+            links:
+              type: array
+              items:
+                type: string
+              description: Extracted links from the page
+            images:
+              type: array
+              items:
+                type: string
+              description: Extracted image URLs
+            screenshot:
+              type: string
+              description: Base64 encoded screenshot
+            metadata:
+              $ref: '#/components/schemas/PageMetadata'
+        warning:
+          type: string
+          description: Warning message if applicable
+      required: [success, data]
+
+    PageMetadata:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Page title
+        description:
+          type: string
+          description: Meta description
+        language:
+          type: string
+          description: Detected language
+        sourceURL:
+          type: string
+          format: uri
+          description: Canonical source URL
+        statusCode:
+          type: integer
+          description: HTTP status code
+        error:
+          type: string
+          description: Error message if scraping failed
+
+    # Crawling Schemas
+    CrawlRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Starting URL for crawl
+          example: "https://docs.example.com"
+        excludePaths:
+          type: array
+          items:
+            type: string
+          description: Regex patterns for URLs to exclude
+          example: ["/admin/.*", "/private/.*"]
+        includePaths:
+          type: array
+          items:
+            type: string
+          description: Regex patterns for URLs to include
+          example: ["/docs/.*", "/api/.*"]
+        maxDiscoveryDepth:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 20
+          description: Maximum crawl depth
+        sitemap:
+          type: string
+          enum: [include, ignore, only]
+          default: include
+          description: How to handle sitemap discovery
+        ignoreQueryParameters:
+          type: boolean
+          default: false
+          description: Ignore query parameters in URL normalization
+        limit:
+          type: integer
+          default: 5000
+          minimum: 1
+          maximum: 100000
+          description: Maximum number of pages to crawl
+        crawlEntireDomain:
+          type: boolean
+          default: false
+          description: Allow crawling entire domain (not just subdirectories)
+        allowExternalLinks:
+          type: boolean
+          default: false
+          description: Follow links to external domains
+        allowSubdomains:
+          type: boolean
+          default: false
+          description: Allow crawling subdomains
+        delay:
+          type: integer
+          default: 250
+          minimum: 0
+          maximum: 10000
+          description: Delay between requests in milliseconds
+        maxConcurrency:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 20
+          description: Maximum concurrent requests
+        webhook:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: Webhook URL for completion notification
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+              description: Custom headers for webhook
+          description: Webhook configuration for job completion
+        scrapeOptions:
+          type: object
+          description: Options to apply to each scraped page
+          properties:
+            formats:
+              type: array
+              items:
+                type: string
+                enum: [markdown, html, rawHtml, links, images]
+            onlyMainContent:
+              type: boolean
+              default: true
+      required: [url]
+
+    CrawlStartResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        id:
+          type: string
+          format: uuid
+          description: Unique crawl job identifier
+        url:
+          type: string
+          description: URL to check crawl status
+          example: "/v2/crawl/550e8400-e29b-41d4-a716-446655440000"
+      required: [success, id, url]
+
+    CrawlStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum: [queued, running, completed, failed, canceled]
+          description: Current job status
+        total:
+          type: integer
+          description: Total URLs discovered
+        completed:
+          type: integer
+          description: Number of URLs successfully processed
+        failed:
+          type: integer
+          description: Number of URLs that failed processing
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              markdown:
+                type: string
+              metadata:
+                $ref: '#/components/schemas/PageMetadata'
+          description: Array of scraped page results
+      required: [success, status, total, completed, failed, data]
+
+    CrawlCancelResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Crawl job canceled"
+      required: [success, message]
+
+    # Mapping Schemas
+    MapRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Website URL to map
+          example: "https://docs.example.com"
+        search:
+          type: string
+          description: Search term to filter discovered URLs
+          example: "api"
+        limit:
+          type: integer
+          default: 5000
+          minimum: 1
+          maximum: 100000
+          description: Maximum number of URLs to return
+        ignoreSitemap:
+          type: boolean
+          default: false
+          description: Ignore sitemap and use only crawling
+        sitemapOnly:
+          type: boolean
+          default: false
+          description: Use only sitemap, don't crawl
+      required: [url]
+
+    MapResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Array of discovered URLs
+        metadata:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of URLs found
+            truncated:
+              type: boolean
+              description: Whether results were truncated due to limit
+            sitemapFound:
+              type: boolean
+              description: Whether a sitemap was discovered
+      required: [success, links, metadata]
+
+    # Batch Processing Schemas
+    BatchScrapeRequest:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          maxItems: 10000
+          description: Array of URLs to scrape
+          example: ["https://example.com/page1", "https://example.com/page2"]
+        ignoreInvalidURLs:
+          type: boolean
+          default: false
+          description: Continue processing if some URLs are invalid
+        maxConcurrency:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+          description: Maximum concurrent scraping operations
+        scrapeOptions:
+          type: object
+          description: Scraping options to apply to all URLs
+          properties:
+            formats:
+              type: array
+              items:
+                type: string
+                enum: [markdown, html, rawHtml, links, images]
+            onlyMainContent:
+              type: boolean
+              default: true
+        webhook:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+          description: Webhook configuration for completion notification
+      required: [urls]
+
+    BatchScrapeStartResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        id:
+          type: string
+          format: uuid
+          description: Unique batch job identifier
+        url:
+          type: string
+          description: URL to check batch status
+        invalidURLs:
+          type: array
+          items:
+            type: string
+          description: List of invalid URLs that were excluded
+      required: [success, id, url]
+
+    BatchStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        total:
+          type: integer
+          description: Total number of URLs in batch
+        completed:
+          type: integer
+          description: Number of URLs successfully processed
+        failed:
+          type: integer
+          description: Number of URLs that failed
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              markdown:
+                type: string
+              metadata:
+                $ref: '#/components/schemas/PageMetadata'
+          description: Array of batch processing results
+      required: [success, status, total, completed, failed, data]
+
+    # MCP (Model Context Protocol) Schemas
+    MCPServerInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "WebHarvest MCP Server"
+        version:
+          type: string
+          example: "1.0.0"
+        protocol:
+          type: string
+          example: "2025-06-18"
+        transport:
+          type: string
+          example: "Streamable HTTP"
+        status:
+          type: string
+          example: "operational"
+        tools:
+          type: integer
+          description: Number of available tools
+        resources:
+          type: integer
+          description: Number of available resources
+        prompts:
+          type: integer
+          description: Number of available prompts
+        capabilities:
+          type: object
+          properties:
+            scraping:
+              type: boolean
+            crawling:
+              type: boolean
+            batch_processing:
+              type: boolean
+            openwebui_sync:
+              type: boolean
+            change_tracking:
+              type: boolean
+      required: [name, version, protocol, status]
+
+    MCPRequest:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          description: JSON-RPC version
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Request identifier
+        method:
+          type: string
+          description: MCP method name
+          enum: 
+            - initialize
+            - tools/list
+            - tools/call
+            - resources/list
+            - resources/read
+            - prompts/list
+            - prompts/get
+        params:
+          type: object
+          description: Method parameters
+      required: [jsonrpc, method]
+
+    MCPResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        result:
+          type: object
+          description: Success result
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+            data:
+              type: object
+          description: Error information
+      required: [jsonrpc]
+
+    MCPErrorResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              description: Error code
+            message:
+              type: string
+              description: Error message
+            data:
+              type: object
+              description: Additional error data
+          required: [code, message]
+      required: [jsonrpc, error]

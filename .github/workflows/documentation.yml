@@ -1,0 +1,386 @@
+name: 📚 Documentation Generation and Deployment
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'webharvest/**/*.py'
+      - 'webclone-pro/app/api/**/*.ts'
+      - 'webclone-pro/components/**/*.tsx'
+      - 'docs/**/*.md'
+      - '**/*.md'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      deploy_to_pages:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: true
+        type: boolean
+      force_rebuild:
+        description: 'Force complete rebuild'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  generate-api-docs:
+    name: 🔧 Generate API Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better context
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install fastapi[all] uvicorn
+        pip install pydantic pydantic-settings
+        pip install sphinx sphinx-rtd-theme
+        pip install sphinx-autodoc-typehints
+        pip install myst-parser
+        cd webharvest
+        pip install -r requirements.txt
+    
+    - name: 🔗 Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 'webclone-pro/package-lock.json'
+    
+    - name: 📦 Install Node.js dependencies
+      run: |
+        cd webclone-pro
+        npm ci
+        npm install -g @redocly/cli swagger-jsdoc
+    
+    - name: 🏗️ Generate WebHarvest OpenAPI spec
+      run: |
+        cd webharvest
+        python -c "
+        import sys
+        sys.path.append('.')
+        from app.main import app
+        import json
+        
+        with open('../docs/api/webharvest-openapi.json', 'w') as f:
+            json.dump(app.openapi(), f, indent=2)
+        "
+        echo '✅ WebHarvest OpenAPI spec generated'
+    
+    - name: 🏗️ Generate WebClone Pro API docs
+      run: |
+        cd webclone-pro
+        npx swagger-jsdoc -d ./docs/swagger-config.json ./app/api/**/*.ts -o ../docs/api/webclone-pro-openapi.json
+        echo '✅ WebClone Pro OpenAPI spec generated'
+    
+    - name: 🔄 Convert OpenAPI to HTML
+      run: |
+        # Generate beautiful HTML documentation
+        redocly build-docs docs/api/webharvest-openapi.json --output docs/html/webharvest-api.html
+        redocly build-docs docs/api/webclone-pro-openapi.json --output docs/html/webclone-pro-api.html
+        echo '✅ HTML API documentation generated'
+    
+    - name: 📚 Generate Python API docs with Sphinx
+      run: |
+        cd webharvest
+        mkdir -p ../docs/python-api
+        sphinx-quickstart -q --sep -p "WebHarvest API" -a "WebHarvest Team" -v "2.0" --ext-autodoc --ext-viewcode ../docs/python-api
+        
+        # Configure Sphinx
+        cat >> ../docs/python-api/source/conf.py << 'EOF'
+        import os
+        import sys
+        sys.path.insert(0, os.path.abspath('../../../webharvest'))
+
+        extensions.extend([
+            'sphinx.ext.autodoc',
+            'sphinx.ext.viewcode',
+            'sphinx.ext.napoleon',
+            'sphinx_autodoc_typehints'
+        ])
+
+        html_theme = 'sphinx_rtd_theme'
+        autodoc_typehints = 'description'
+        EOF
+        
+        # Generate module documentation
+        cd ../docs/python-api
+        sphinx-apidoc -o source ../../webharvest/app --force
+        make html
+        echo '✅ Python API documentation generated'
+    
+    - name: 📊 Generate architecture diagrams
+      run: |
+        # Install Mermaid CLI
+        npm install -g @mermaid-js/mermaid-cli
+        
+        # Convert Mermaid diagrams to PNG/SVG
+        mkdir -p docs/images/architecture
+        
+        find architecture-diagrams -name "*.md" -exec sh -c '
+          for file; do
+            basename=$(basename "$file" .md)
+            # Extract Mermaid code blocks and convert to images
+            grep -A 999 "```mermaid" "$file" | grep -B 999 "^```$" | sed "/^```/d" > "temp_$basename.mmd"
+            if [ -s "temp_$basename.mmd" ]; then
+              mmdc -i "temp_$basename.mmd" -o "docs/images/architecture/$basename.png" --theme dark --backgroundColor transparent
+              mmdc -i "temp_$basename.mmd" -o "docs/images/architecture/$basename.svg" --theme dark --backgroundColor transparent
+              rm "temp_$basename.mmd"
+            fi
+          done
+        ' sh {} +
+        echo '✅ Architecture diagrams generated'
+    
+    - name: 🎨 Generate interactive documentation site
+      run: |
+        mkdir -p docs/site
+        
+        cat > docs/site/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Firecrawl Clone Documentation</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+            <style>
+                .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+                .card { transition: transform 0.2s; }
+                .card:hover { transform: translateY(-5px); }
+            </style>
+        </head>
+        <body>
+            <section class="hero is-primary is-medium">
+                <div class="hero-body">
+                    <div class="container">
+                        <h1 class="title is-1">🔥 Firecrawl Clone Documentation</h1>
+                        <p class="subtitle is-4">Comprehensive documentation for WebHarvest and WebClone Pro platforms</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <div class="columns is-multiline">
+                        <div class="column is-half">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3 class="title is-3">🕸️ WebHarvest API</h3>
+                                    <p>Self-hosted web scraping platform with MCP integration</p>
+                                    <a href="./webharvest-api.html" class="button is-primary">View API Docs</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-half">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3 class="title is-3">🎨 WebClone Pro API</h3>
+                                    <p>AI-native website cloning and creation platform</p>
+                                    <a href="./webclone-pro-api.html" class="button is-info">View API Docs</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-half">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3 class="title is-3">🏗️ Architecture</h3>
+                                    <p>System architecture and component diagrams</p>
+                                    <a href="./architecture/" class="button is-warning">View Diagrams</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-half">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3 class="title is-3">🐍 Python API Reference</h3>
+                                    <p>Detailed Python API documentation</p>
+                                    <a href="./python-api/_build/html/index.html" class="button is-success">View Docs</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </body>
+        </html>
+        EOF
+        echo '✅ Documentation site generated'
+    
+    - name: 📤 Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-${{ github.sha }}
+        path: |
+          docs/
+          !docs/.gitkeep
+        retention-days: 30
+    
+    - name: 💾 Cache documentation build
+      uses: actions/cache@v3
+      with:
+        path: |
+          docs/html/
+          docs/python-api/_build/
+          docs/images/
+        key: docs-${{ runner.os }}-${{ hashFiles('**/*.py', '**/*.ts', '**/*.md') }}
+        restore-keys: |
+          docs-${{ runner.os }}-
+
+  deploy-to-pages:
+    name: 🚀 Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: generate-api-docs
+    if: |
+      github.ref == 'refs/heads/main' && 
+      (github.event_name == 'push' || github.event.inputs.deploy_to_pages == 'true')
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: 📥 Download documentation artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: documentation-${{ github.sha }}
+        path: ./docs
+    
+    - name: 🔧 Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: 📤 Upload to Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./docs/site
+    
+    - name: 🚀 Deploy to Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  validate-documentation:
+    name: ✅ Validate Documentation Quality
+    runs-on: ubuntu-latest
+    needs: generate-api-docs
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download documentation artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: documentation-${{ github.sha }}
+        path: ./docs-generated
+    
+    - name: 🔍 Validate OpenAPI specifications
+      run: |
+        npm install -g @apidevtools/swagger-parser
+        
+        echo "🔍 Validating WebHarvest OpenAPI spec..."
+        swagger-parser validate docs-generated/api/webharvest-openapi.json
+        
+        echo "🔍 Validating WebClone Pro OpenAPI spec..."
+        swagger-parser validate docs-generated/api/webclone-pro-openapi.json
+        
+        echo "✅ All OpenAPI specifications are valid"
+    
+    - name: 📝 Check documentation coverage
+      run: |
+        echo "📊 Documentation Coverage Report"
+        echo "================================"
+        
+        # Count API endpoints
+        webhook_endpoints=$(jq '.paths | keys | length' docs-generated/api/webharvest-openapi.json)
+        webclone_endpoints=$(jq '.paths | keys | length' docs-generated/api/webclone-pro-openapi.json)
+        
+        echo "WebHarvest API endpoints documented: $webhook_endpoints"
+        echo "WebClone Pro API endpoints documented: $webclone_endpoints"
+        echo "Total API endpoints: $((webhook_endpoints + webclone_endpoints))"
+        
+        # Count markdown files
+        markdown_files=$(find . -name "*.md" -not -path "./node_modules/*" | wc -l)
+        echo "Markdown documentation files: $markdown_files"
+        
+        # Check for required documentation sections
+        required_files=("README.md" "DEVELOPER_SETUP_GUIDE.md" "DEPLOYMENT_GUIDE.md" "API_INTEGRATION_GUIDE.md")
+        missing_files=""
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            missing_files="$missing_files $file"
+          fi
+        done
+        
+        if [ -n "$missing_files" ]; then
+          echo "❌ Missing required documentation files:$missing_files"
+          exit 1
+        else
+          echo "✅ All required documentation files present"
+        fi
+    
+    - name: 🔗 Check internal links
+      run: |
+        echo "🔗 Checking internal documentation links..."
+        
+        # Simple link checker for markdown files
+        find . -name "*.md" -not -path "./node_modules/*" | xargs grep -h -o '\[.*\](.*\.md)' | while read -r link; do
+          file=$(echo "$link" | sed 's/.*](\(.*\))/\1/')
+          if [ ! -f "$file" ] && [ ! -f "./$file" ]; then
+            echo "❌ Broken link found: $link"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All internal links are valid"
+
+  notify-completion:
+    name: 📢 Notify Documentation Updates
+    runs-on: ubuntu-latest
+    needs: [generate-api-docs, deploy-to-pages, validate-documentation]
+    if: always()
+    
+    steps:
+    - name: 📢 Create summary
+      run: |
+        echo "## 📚 Documentation Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Generate API Docs | ${{ needs.generate-api-docs.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deploy to Pages | ${{ needs.deploy-to-pages.result == 'success' && '✅ Success' || needs.deploy-to-pages.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Validate Documentation | ${{ needs.validate-documentation.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.deploy-to-pages.result }}" == "success" ]; then
+          echo "🔗 **Documentation Site**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "👤 **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
