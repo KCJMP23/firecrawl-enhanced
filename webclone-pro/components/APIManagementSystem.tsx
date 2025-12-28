@@ -50,7 +50,8 @@ import {
   Monitor,
   Cpu,
   HardDrive,
-  Network
+  Network,
+  MessageSquare
 } from 'lucide-react'
 
 interface APIEndpoint {

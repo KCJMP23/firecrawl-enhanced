@@ -760,10 +760,10 @@ export class DesignDNAExtractor {
     
     // Scan all elements for colors
     document.querySelectorAll('*').forEach(element => {
-      const style = window.getComputedStyle(element)
+      const style = window.getComputedStyle(element);
       
       // Extract solid colors
-      ['color', 'backgroundColor', 'borderColor'].forEach(prop => {
+      ;['color', 'backgroundColor', 'borderColor'].forEach(prop => {
         const value = style.getPropertyValue(prop === 'borderColor' ? 'border-color' : 
                        prop === 'backgroundColor' ? 'background-color' : prop)
         if (value && value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent') {
@@ -842,16 +842,16 @@ export class DesignDNAExtractor {
     const gaps = new Set<string>()
     
     document.querySelectorAll('*').forEach(element => {
-      const style = window.getComputedStyle(element)
+      const style = window.getComputedStyle(element);
       
       // Extract padding
-      ['padding-top', 'padding-right', 'padding-bottom', 'padding-left'].forEach(prop => {
+      ;['padding-top', 'padding-right', 'padding-bottom', 'padding-left'].forEach(prop => {
         const value = style.getPropertyValue(prop)
         if (value && value !== '0px') paddings.add(value)
       })
       
       // Extract margin
-      ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'].forEach(prop => {
+      ;['margin-top', 'margin-right', 'margin-bottom', 'margin-left'].forEach(prop => {
         const value = style.getPropertyValue(prop)
         if (value && value !== '0px' && value !== 'auto') margins.add(value)
       })
@@ -1005,7 +1005,7 @@ export class DesignDNAExtractor {
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result ? {
+    return result && result[1] && result[2] && result[3] ? {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)

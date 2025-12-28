@@ -214,6 +214,7 @@ function RulesPanel({ rules }: { rules: ResponsiveRule[] }) {
       case 'applied': return 'text-green-400 bg-green-400/20'
       case 'pending': return 'text-yellow-400 bg-yellow-400/20'
       case 'error': return 'text-red-400 bg-red-400/20'
+      default: return 'text-gray-400 bg-gray-400/20'
     }
   }
 
@@ -454,7 +455,7 @@ export default function ResponsiveDesignConverter() {
     }, 500)
   }
 
-  const activeBp = breakpoints.find(bp => bp.isActive) || breakpoints[0]
+  const activeBp = breakpoints.find(bp => bp.isActive) || breakpoints[0]!
 
   return (
     <div className="space-y-6">

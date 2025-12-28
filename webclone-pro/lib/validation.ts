@@ -136,9 +136,10 @@ export const pdfSchemas = {
       .int('File size must be an integer')
       .min(1, 'File cannot be empty')
       .max(50 * 1024 * 1024, 'File size cannot exceed 50MB'), // 50MB limit
-    type: z.literal('application/pdf', {
-      errorMap: () => ({ message: 'Only PDF files are allowed' })
-    })
+    type: z.literal('application/pdf').refine(
+      () => true,
+      { message: 'Only PDF files are allowed' }
+    )
   }),
 
   metadata: z.object({
@@ -163,12 +164,8 @@ export const analyticsSchemas = {
     endDate: z.string()
       .datetime('Invalid end date format')
       .optional(),
-    metric: z.enum(['views', 'clones', 'users', 'errors'], {
-      errorMap: () => ({ message: 'Invalid metric type' })
-    }).optional(),
-    groupBy: z.enum(['day', 'week', 'month'], {
-      errorMap: () => ({ message: 'Invalid groupBy value' })
-    }).default('day')
+    metric: z.enum(['views', 'clones', 'users', 'errors']).optional(),
+    groupBy: z.enum(['day', 'week', 'month']).default('day')
   }).refine((data) => {
     if (data.startDate && data.endDate) {
       return new Date(data.startDate) <= new Date(data.endDate)
@@ -269,7 +266,7 @@ export function createRateLimitKey(
   endpoint: string,
   identifier?: string
 ): string {
-  const ip = request.ip || 'unknown'
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown'
   const userAgent = request.headers.get('user-agent') || 'unknown'
   const id = identifier || `${ip}:${userAgent.slice(0, 50)}`
   

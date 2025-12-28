@@ -1,4 +1,4 @@
-import * as pdf from 'pdf-parse'
+const pdf = require('pdf-parse')
 import { fromBuffer } from 'pdf2pic'
 import { v4 as uuidv4 } from 'uuid'
 import OpenAI from 'openai'
@@ -72,7 +72,7 @@ export class PDFProcessorImpl {
       
       return results.map((result, index) => ({
         pageNumber: index + 1,
-        imageBuffer: result.buffer,
+        imageBuffer: result.buffer || Buffer.alloc(0),
         filename: `page_${index + 1}.jpg`,
         format: 'jpeg'
       }))
@@ -195,7 +195,12 @@ export class PDFProcessorImpl {
     position?: any
     embedding: number[]
   }>> {
-    const chunksWithEmbeddings = []
+    const chunksWithEmbeddings: Array<{
+      text: string
+      page: number
+      position?: any
+      embedding: number[]
+    }> = []
     
     // Process in batches to avoid rate limits
     const batchSize = 10
@@ -212,7 +217,7 @@ export class PDFProcessorImpl {
         batch.forEach((chunk, index) => {
           chunksWithEmbeddings.push({
             ...chunk,
-            embedding: response.data[index].embedding
+            embedding: response.data[index]?.embedding || []
           })
         })
         
@@ -266,7 +271,7 @@ Respond only with valid JSON:`
         max_tokens: 1000
       })
 
-      const content = response.choices[0].message.content
+      const content = response.choices[0]?.message?.content
       if (!content) throw new Error('No response from AI')
 
       const analysis = JSON.parse(content)
@@ -346,7 +351,7 @@ Respond only with valid JSON:`
           max_tokens: 500
         })
         
-        const content = response.choices[0].message.content
+        const content = response.choices[0]?.message?.content
         if (content) {
           const analysis = JSON.parse(content)
           analyzedImages.push({
@@ -403,7 +408,7 @@ Respond only with valid JSON:`
         encoding_format: 'float'
       })
       
-      const queryEmbedding = queryResponse.data[0].embedding
+      const queryEmbedding = queryResponse.data[0]?.embedding || []
       
       // Calculate similarities
       const results = documentChunks
@@ -469,7 +474,7 @@ Answer:`
         max_tokens: 500
       })
 
-      const answer = response.choices[0].message.content || 'I cannot generate an answer at this time.'
+      const answer = response.choices[0]?.message?.content || 'I cannot generate an answer at this time.'
       
       // Calculate confidence based on similarity scores
       const avgSimilarity = relevantChunks.reduce((sum, chunk) => sum + chunk.similarity, 0) / relevantChunks.length
@@ -507,9 +512,9 @@ Answer:`
     let normB = 0
     
     for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i]
-      normA += a[i] * a[i]
-      normB += b[i] * b[i]
+      dotProduct += (a[i] || 0) * (b[i] || 0)
+      normA += (a[i] || 0) * (a[i] || 0)
+      normB += (b[i] || 0) * (b[i] || 0)
     }
     
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))

@@ -223,7 +223,7 @@ export default function AgentDashboard() {
                       id="url"
                       placeholder="https://example.com"
                       value={workflowParams.url || ''}
-                      onChange={(e) => setWorkflowParams(prev => ({ ...prev, url: e.target.value }))}
+                      onChange={(e) => setWorkflowParams((prev: any) => ({ ...prev, url: e.target.value }))}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -231,7 +231,7 @@ export default function AgentDashboard() {
                       <Label htmlFor="framework">Framework</Label>
                       <Select 
                         value={workflowParams.requirements?.framework || 'react'}
-                        onValueChange={(value) => setWorkflowParams(prev => ({
+                        onValueChange={(value) => setWorkflowParams((prev: any) => ({
                           ...prev,
                           requirements: { ...prev.requirements, framework: value }
                         }))}
@@ -251,7 +251,7 @@ export default function AgentDashboard() {
                       <Label htmlFor="styling">Styling</Label>
                       <Select 
                         value={workflowParams.requirements?.styling || 'tailwind'}
-                        onValueChange={(value) => setWorkflowParams(prev => ({
+                        onValueChange={(value) => setWorkflowParams((prev: any) => ({
                           ...prev,
                           requirements: { ...prev.requirements, styling: value }
                         }))}
@@ -278,7 +278,7 @@ export default function AgentDashboard() {
                       id="description"
                       placeholder="Describe the component you want to generate..."
                       value={workflowParams.description || ''}
-                      onChange={(e) => setWorkflowParams(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) => setWorkflowParams((prev: any) => ({ ...prev, description: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export default function AgentDashboard() {
                       id="topic"
                       placeholder="Enter research topic..."
                       value={workflowParams.topic || ''}
-                      onChange={(e) => setWorkflowParams(prev => ({ ...prev, topic: e.target.value }))}
+                      onChange={(e) => setWorkflowParams((prev: any) => ({ ...prev, topic: e.target.value }))}
                     />
                   </div>
                 </div>

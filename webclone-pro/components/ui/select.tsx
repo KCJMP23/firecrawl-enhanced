@@ -153,6 +153,7 @@ export function SelectContent({ children, className, position = 'bottom' }: Sele
         document.removeEventListener('keydown', handleEscape)
       }
     }
+    return undefined
   }, [context.open, context])
 
   if (!context.open) return null

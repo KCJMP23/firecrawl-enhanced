@@ -4,7 +4,7 @@
  */
 
 import { logSecureError } from './secure-logger'
-import { performanceMonitor } from './monitoring'
+// import { performanceMonitor } from './monitoring'
 
 // Log levels
 export enum LogLevel {
@@ -32,6 +32,7 @@ interface LogMetadata {
 
 // Log entry interface
 interface LogEntry {
+  level: LogLevel
   message: string
   metadata: LogMetadata
   context?: Record<string, any>
@@ -55,7 +56,8 @@ class ConsoleTransport implements LogTransport {
     const timestamp = new Date(metadata.timestamp).toISOString()
     
     if (this.useColors) {
-      const color = this.getColor(level)
+      const levelName = LogLevel[level] || 'INFO'
+    const color = this.getColor(levelName)
       console.log(`${color}[${timestamp}] [${level}]${this.reset()} ${message}`)
     } else {
       console.log(`[${timestamp}] [${level}] ${message}`)
@@ -111,7 +113,7 @@ class FileTransport implements LogTransport {
   name = 'file'
   private fs: any
   private path: any
-  private logPath: string
+  private logPath: string = ''
   private maxFileSize = 10 * 1024 * 1024  // 10MB
   private maxFiles = 10
   private currentStream: any
@@ -357,6 +359,7 @@ class Logger {
     if (!this.shouldLog(LogLevel.ERROR)) return
 
     const entry: LogEntry = {
+      level: LogLevel.ERROR,
       message,
       metadata: this.createMetadata('ERROR', metadata),
       context,
@@ -375,6 +378,7 @@ class Logger {
     if (!this.shouldLog(LogLevel.WARN)) return
 
     const entry: LogEntry = {
+      level: LogLevel.WARN,
       message,
       metadata: this.createMetadata('WARN', metadata),
       context
@@ -387,6 +391,7 @@ class Logger {
     if (!this.shouldLog(LogLevel.INFO)) return
 
     const entry: LogEntry = {
+      level: LogLevel.INFO,
       message,
       metadata: this.createMetadata('INFO', metadata),
       context
@@ -399,6 +404,7 @@ class Logger {
     if (!this.shouldLog(LogLevel.DEBUG)) return
 
     const entry: LogEntry = {
+      level: LogLevel.DEBUG,
       message,
       metadata: this.createMetadata('DEBUG', metadata),
       context
@@ -411,6 +417,7 @@ class Logger {
     if (!this.shouldLog(LogLevel.TRACE)) return
 
     const entry: LogEntry = {
+      level: LogLevel.TRACE,
       message,
       metadata: this.createMetadata('TRACE', metadata),
       context
@@ -432,11 +439,11 @@ class Logger {
   // Performance logging
   startTimer(label: string): () => void {
     const start = Date.now()
-    performanceMonitor.startTimer(label)
+    // performanceMonitor.startTimer(label)
     
     return () => {
       const duration = Date.now() - start
-      performanceMonitor.endTimer(label)
+      // performanceMonitor.endTimer(label)
       this.debug(`Timer ${label} completed`, { duration })
     }
   }

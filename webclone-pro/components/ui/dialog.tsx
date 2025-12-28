@@ -44,9 +44,12 @@ const DialogTrigger = forwardRef<HTMLButtonElement, DialogTriggerProps>(
     }
 
     if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children, {
-        onClick: handleClick,
-        ...children.props
+      return React.cloneElement(children as React.ReactElement<any>, {
+        onClick: (e: React.MouseEvent) => {
+          const childProps = (children as any).props
+          childProps?.onClick?.(e)
+          handleClick(e as React.MouseEvent<HTMLButtonElement>)
+        }
       })
     }
 
@@ -76,29 +79,29 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     if (!context?.open) return null
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Backdrop */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in-0 duration-200">
+        {/* Enhanced Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in-0 duration-200"
           onClick={() => context.onOpenChange(false)}
         />
         
-        {/* Content */}
+        {/* Content with enhanced styling */}
         <div
           ref={ref}
           className={cn(
-            "relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full m-4 max-h-[90vh] overflow-auto",
+            "relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 max-w-lg w-full m-4 max-h-[90vh] overflow-auto animate-in zoom-in-95 slide-in-from-bottom-8 duration-200",
             className
           )}
           onClick={(e) => e.stopPropagation()}
           {...props}
         >
-          {/* Close button */}
+          {/* Enhanced Close button */}
           <button
-            className="absolute right-4 top-4 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            className="absolute right-4 top-4 p-2 rounded-xl bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-sm opacity-70 hover:opacity-100 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group"
             onClick={() => context.onOpenChange(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 group-hover:rotate-90 transition-transform duration-200" />
             <span className="sr-only">Close</span>
           </button>
           
@@ -119,7 +122,7 @@ const DialogHeader = forwardRef<HTMLDivElement, DialogHeaderProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex flex-col space-y-1.5 text-center sm:text-left p-6 pb-4", className)}
+      className={cn("flex flex-col space-y-2 text-center sm:text-left p-6 pb-4 border-b border-white/10", className)}
       {...props}
     />
   )
@@ -135,7 +138,7 @@ const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      className={cn("text-xl font-bold leading-tight tracking-tight bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent", className)}
       {...props}
     />
   )
@@ -151,7 +154,7 @@ const DialogDescription = forwardRef<HTMLParagraphElement, DialogDescriptionProp
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn("text-sm text-gray-600 dark:text-gray-400", className)}
+      className={cn("text-sm text-gray-600 dark:text-gray-400 leading-relaxed", className)}
       {...props}
     />
   )
@@ -167,7 +170,7 @@ const DialogFooter = forwardRef<HTMLDivElement, DialogFooterProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4", className)}
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 p-6 pt-4 border-t border-white/10 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl", className)}
       {...props}
     />
   )

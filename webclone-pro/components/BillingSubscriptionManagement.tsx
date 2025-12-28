@@ -1040,7 +1040,7 @@ export default function BillingSubscriptionManagement() {
 
             <div className="pt-4 border-t border-white/10 mt-4">
               <SimpleButton 
-                variant="danger" 
+                variant="destructive" 
                 className="w-full"
                 onClick={() => setShowCancelModal(true)}
               >
@@ -1216,7 +1216,7 @@ export default function BillingSubscriptionManagement() {
             </p>
             <div className="flex items-center space-x-3">
               <SimpleButton
-                variant="danger"
+                variant="destructive"
                 onClick={() => {
                   console.log('Subscription cancelled')
                   setShowCancelModal(false)

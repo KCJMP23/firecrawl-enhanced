@@ -9,8 +9,8 @@ const ExecuteWorkflowSchema = z.object({
     url: z.string().optional(),
     description: z.string().optional(),
     topic: z.string().optional(),
-    requirements: z.record(z.any()).optional(),
-    scope: z.record(z.any()).optional(),
+    requirements: z.record(z.string(), z.any()).optional(),
+    scope: z.record(z.string(), z.any()).optional(),
     workflow: z.object({
       id: z.string(),
       name: z.string(),
@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        results = await orchestrator.executeWorkflow(parameters.workflow);
+        results = await orchestrator.executeWorkflow({
+          ...parameters.workflow,
+          status: 'pending' as const
+        });
         break;
 
       default:
@@ -108,7 +111,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request format', details: error.errors },
+        { error: 'Invalid request format', details: error.issues },
         { status: 400 }
       );
     }

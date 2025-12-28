@@ -3,6 +3,9 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ModelProvider } from '../types';
+import { mockProvider } from '../mock-provider';
+
+export type { ModelProvider } from '../types';
 
 export interface ModelConfig {
   temperature?: number;
@@ -140,14 +143,32 @@ export class ModelRouter {
     const openaiKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const googleKey = process.env.GOOGLE_AI_API_KEY;
+    const useMockMode = process.env.ENABLE_MOCK_MODE === 'true' || 
+                        openaiKey === 'demo' || 
+                        anthropicKey === 'demo' || 
+                        googleKey === 'demo';
 
-    if (openaiKey) {
+    // If any key is 'demo' or mock mode is enabled, use mock provider
+    if (useMockMode || (!openaiKey && !anthropicKey && !googleKey)) {
+      console.log('🤖 Running in mock mode - using simulated AI responses');
+      // Create a mock wrapper that implements ModelProvider interface
+      const mockWrapper = {
+        name: 'mock',
+        generateResponse: (prompt: string) => mockProvider.generateResponse(prompt),
+        calculateCost: (tokens: number) => 0,
+        getMaxTokens: () => 100000,
+      };
+      this.providers.set('mock', mockWrapper);
+      return;
+    }
+
+    if (openaiKey && openaiKey !== 'demo') {
       this.providers.set('openai', new OpenAIProvider(openaiKey));
     }
-    if (anthropicKey) {
+    if (anthropicKey && anthropicKey !== 'demo') {
       this.providers.set('anthropic', new AnthropicProvider(anthropicKey));
     }
-    if (googleKey) {
+    if (googleKey && googleKey !== 'demo') {
       this.providers.set('google', new GoogleProvider(googleKey));
     }
   }

@@ -207,7 +207,7 @@ export function ModelCard({ model, onAction, isSelected }: ModelCardProps) {
               <Activity className="w-3 h-3 text-blue-500" />
               <span className="text-xs text-gray-500">Latency</span>
             </div>
-            <p className="text-sm font-medium">{model.metrics.latencyP95}ms</p>
+            <p className="text-sm font-medium">{model.metrics?.latencyP95 || 0}ms</p>
           </div>
           
           <div className="text-center">
@@ -215,7 +215,7 @@ export function ModelCard({ model, onAction, isSelected }: ModelCardProps) {
               <Gauge className="w-3 h-3 text-green-500" />
               <span className="text-xs text-gray-500">Uptime</span>
             </div>
-            <p className="text-sm font-medium">{model.metrics.uptime}%</p>
+            <p className="text-sm font-medium">{model.metrics?.uptime || 99.9}%</p>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ export function ModelCard({ model, onAction, isSelected }: ModelCardProps) {
         </div>
 
         {/* Tags */}
-        {model.tags.length > 0 && (
+        {model.tags && model.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {model.tags.slice(0, 3).map((tag, index) => (
               <span

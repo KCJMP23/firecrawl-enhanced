@@ -332,11 +332,11 @@ export class AgentOrchestrator {
 
   // Utility methods
   listAvailableAgents(): AgentConfig[] {
-    return Array.from(this.agents.values()).map(agent => agent.config);
+    return Array.from(this.agents.values()).map(agent => agent.getConfig());
   }
 
   listAvailableCrews(): any[] {
-    return Array.from(this.crews.values()).map(crew => crew.config);
+    return Array.from(this.crews.values()).map(crew => crew.getConfig());
   }
 
   getWorkflowHistory(): Workflow[] {

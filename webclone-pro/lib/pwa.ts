@@ -131,8 +131,8 @@ export class PWAManager {
     
     // Trigger background sync if service worker is available
     if (this.serviceWorker && 'sync' in window.ServiceWorkerRegistration.prototype) {
-      this.serviceWorker.sync.register('project-sync').catch(console.error)
-      this.serviceWorker.sync.register('analytics-sync').catch(console.error)
+      (this.serviceWorker as any).sync?.register('project-sync').catch(console.error);
+      (this.serviceWorker as any).sync?.register('analytics-sync').catch(console.error)
     }
   }
 
@@ -163,7 +163,7 @@ export class PWAManager {
         userVisibleOnly: true,
         applicationServerKey: this.urlBase64ToUint8Array(
           process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-        )
+        ) as any
       })
 
       // Send subscription to server

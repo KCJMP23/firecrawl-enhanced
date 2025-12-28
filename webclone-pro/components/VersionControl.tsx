@@ -354,7 +354,7 @@ export default function VersionControl({ projectId, projectName }: VersionContro
       timestamp: new Date('2024-12-15T10:00:00'),
       changes: { added: 156, modified: 0, deleted: 0 },
       hash: 'e1b4c9d',
-      parent: null,
+      parent: undefined,
       branch: 'main',
       tags: ['initial']
     }

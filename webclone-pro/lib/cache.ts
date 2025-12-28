@@ -45,9 +45,10 @@ export class CacheManager {
   // Get value from cache
   async get<T = any>(key: string): Promise<T | null> {
     this.stats.totalOperations++
+    let fullKey: string = ''
     
     try {
-      const fullKey = this.generateKey(key)
+      fullKey = this.generateKey(key)
       
       // In a real implementation, this would use Redis
       // For now, using in-memory mock storage
@@ -73,7 +74,7 @@ export class CacheManager {
     } catch (error) {
       this.stats.errors++
       this.updateHitRate()
-      logSecureError(error as Error, {}, { context: 'Cache get error', key: fullKey })
+      logSecureError(error as Error, {}, { context: 'Cache get error', key: fullKey || key })
       return null
     }
   }
@@ -81,9 +82,10 @@ export class CacheManager {
   // Set value in cache
   async set(key: string, value: any, ttl?: number): Promise<boolean> {
     this.stats.totalOperations++
+    let fullKey: string = ''
     
     try {
-      const fullKey = this.generateKey(key)
+      fullKey = this.generateKey(key)
       const expiration = Date.now() + (ttl || this.config.defaultTTL) * 1000
       
       // In a real implementation, this would use Redis
@@ -95,7 +97,7 @@ export class CacheManager {
       return true
     } catch (error) {
       this.stats.errors++
-      logSecureError(error as Error, {}, { context: 'Cache set error', key: fullKey })
+      logSecureError(error as Error, {}, { context: 'Cache set error', key: fullKey || key })
       return false
     }
   }
@@ -103,15 +105,16 @@ export class CacheManager {
   // Delete value from cache
   async delete(key: string): Promise<boolean> {
     this.stats.totalOperations++
+    let fullKey: string = ''
     
     try {
-      const fullKey = this.generateKey(key)
+      fullKey = this.generateKey(key)
       const existed = this.mockStorage.has(fullKey)
       this.mockStorage.delete(fullKey)
       return existed
     } catch (error) {
       this.stats.errors++
-      logSecureError(error as Error, {}, { context: 'Cache delete error', key: fullKey })
+      logSecureError(error as Error, {}, { context: 'Cache delete error', key: fullKey || key })
       return false
     }
   }
@@ -119,9 +122,10 @@ export class CacheManager {
   // Check if key exists
   async exists(key: string): Promise<boolean> {
     this.stats.totalOperations++
+    let fullKey: string = ''
     
     try {
-      const fullKey = this.generateKey(key)
+      fullKey = this.generateKey(key)
       const cached = this.mockStorage.get(fullKey)
       
       if (!cached) return false
@@ -135,7 +139,7 @@ export class CacheManager {
       return true
     } catch (error) {
       this.stats.errors++
-      logSecureError(error as Error, {}, { context: 'Cache exists error', key: fullKey })
+      logSecureError(error as Error, {}, { context: 'Cache exists error', key: fullKey || key })
       return false
     }
   }

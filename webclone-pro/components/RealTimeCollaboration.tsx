@@ -11,7 +11,6 @@ import {
   Share,
   Edit3,
   Eye,
-  Cursor,
   Clock,
   Activity,
   Settings,
@@ -41,7 +40,9 @@ import {
   Phone,
   PhoneOff,
   Monitor,
-  Smartphone
+  Smartphone,
+  MousePointer,
+  Send
 } from 'lucide-react'
 
 interface CollaborationUser {
@@ -520,7 +521,7 @@ export default function RealTimeCollaboration() {
     {
       id: '1',
       type: 'edit',
-      user: collaborationUsers[1],
+      user: collaborationUsers[1]!,
       timestamp: new Date(Date.now() - 120000),
       description: 'Modified the hero section background color',
       location: 'Homepage Template',
@@ -530,7 +531,7 @@ export default function RealTimeCollaboration() {
     {
       id: '2',
       type: 'comment',
-      user: collaborationUsers[0],
+      user: collaborationUsers[0]!,
       timestamp: new Date(Date.now() - 180000),
       description: 'Added feedback on the navigation design',
       location: 'Navigation Component'
@@ -538,7 +539,7 @@ export default function RealTimeCollaboration() {
     {
       id: '3',
       type: 'join',
-      user: collaborationUsers[2],
+      user: collaborationUsers[2]!,
       timestamp: new Date(Date.now() - 300000),
       description: 'Joined the collaboration session',
       location: 'Project Workspace'
@@ -546,7 +547,7 @@ export default function RealTimeCollaboration() {
     {
       id: '4',
       type: 'share',
-      user: collaborationUsers[0],
+      user: collaborationUsers[0]!,
       timestamp: new Date(Date.now() - 480000),
       description: 'Shared the project with john@external.com',
       location: 'Project Settings'
@@ -554,7 +555,7 @@ export default function RealTimeCollaboration() {
     {
       id: '5',
       type: 'edit',
-      user: collaborationUsers[2],
+      user: collaborationUsers[2]!,
       timestamp: new Date(Date.now() - 600000),
       description: 'Updated the color palette for the brand theme',
       location: 'Design System'
@@ -620,6 +621,7 @@ export default function RealTimeCollaboration() {
       
       return () => clearInterval(interval)
     }
+    return undefined
   }, [isVideoCallActive])
 
   useEffect(() => {
@@ -822,7 +824,7 @@ export default function RealTimeCollaboration() {
                         {user.isTyping ? 'Typing...' : `${user.cursor.x}, ${user.cursor.y}`}
                       </div>
                     </div>
-                    <Cursor className="w-4 h-4" style={{ color: user.cursor.color }} />
+                    <MousePointer className="w-4 h-4" style={{ color: user.cursor.color }} />
                   </div>
                 ))}
               </div>

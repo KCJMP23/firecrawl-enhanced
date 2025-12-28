@@ -46,13 +46,13 @@ export class ErrorBoundary extends Component<Props, State> {
     const errorDetails = logSecureError(
       error,
       {
-        component: 'ErrorBoundary',
-        level: this.props.level || 'component',
+        endpoint: 'ErrorBoundary',
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined
       },
       {
         componentStack: errorInfo.componentStack,
         errorBoundaryStack: errorInfo.componentStack,
+        level: this.props.level || 'component'
       }
     )
 

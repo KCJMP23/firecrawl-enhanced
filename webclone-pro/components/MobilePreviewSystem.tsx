@@ -6,7 +6,7 @@ import {
   Tablet,
   Monitor,
   RotateCcw,
-  RotateClockwise,
+  RotateCw,
   Wifi,
   WifiOff,
   Battery,
@@ -313,7 +313,7 @@ export default function MobilePreviewSystem() {
     zoom: 50
   })
 
-  const currentDevice = devices.find(d => d.id === selectedDevice) || devices[0]
+  const currentDevice = devices.find(d => d.id === selectedDevice) || devices[0]!  // devices array is never empty
 
   const handleDeviceChange = (deviceId: string) => {
     setSelectedDevice(deviceId)
@@ -466,7 +466,7 @@ export default function MobilePreviewSystem() {
             <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
             <div className="space-y-3">
               <SimpleButton className="w-full justify-start" onClick={toggleOrientation}>
-                <RotateClockwise className="w-4 h-4 mr-2" />
+                <RotateCw className="w-4 h-4 mr-2" />
                 Rotate Device
               </SimpleButton>
               

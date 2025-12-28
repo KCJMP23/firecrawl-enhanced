@@ -20,6 +20,10 @@ export class Crew {
     });
   }
 
+  getConfig(): CrewConfig {
+    return this.config;
+  }
+
   async executeWorkflow(workflow: Workflow): Promise<{
     status: 'completed' | 'failed' | 'partial';
     results: ExecutionResult[];
@@ -127,7 +131,7 @@ export class Crew {
       id: `planning_${workflow.id}`,
       description: `Create an execution plan for workflow: ${workflow.description}. Available tasks: ${workflow.tasks.map(t => t.description).join(', ')}`,
       expectedOutput: 'Detailed execution plan with task assignments and dependencies',
-      agentId: managerAgent.config.id,
+      agentId: managerAgent.getId(),
       priority: 'critical',
     };
 
@@ -146,7 +150,7 @@ export class Crew {
     // Execute each task with multiple agents and reach consensus
     for (const task of workflow.tasks) {
       const availableAgents = Array.from(this.agents.values())
-        .filter(agent => agent.config.role === 'researcher' || agent.config.role === 'developer');
+        .filter(agent => agent.getRole() === 'researcher' || agent.getRole() === 'developer');
 
       if (availableAgents.length < 2) {
         // Fall back to single agent execution
@@ -238,7 +242,7 @@ export class Crew {
   private findManagerAgent(): Agent | null {
     // Look for planner role first, then any agent
     for (const agent of this.agents.values()) {
-      if (agent.config.role === 'planner') {
+      if (agent.getRole() === 'planner') {
         return agent;
       }
     }
@@ -250,12 +254,12 @@ export class Crew {
     const successfulResults = results.filter(r => r.status === 'success');
     
     if (successfulResults.length === 0) {
-      return results[0]; // Return first result even if failed
+      return results[0]!; // Return first result even if failed (results always has at least one item)
     }
 
     // For now, return the first successful result
     // Could be enhanced with more sophisticated consensus mechanisms
-    return successfulResults[0];
+    return successfulResults[0]!;
   }
 
   // Crew management methods
@@ -275,7 +279,7 @@ export class Crew {
   }
 
   listAgents(): AgentConfig[] {
-    return Array.from(this.agents.values()).map(agent => agent.config);
+    return Array.from(this.agents.values()).map(agent => agent.getConfig());
   }
 
   async getCrewStats(): Promise<{

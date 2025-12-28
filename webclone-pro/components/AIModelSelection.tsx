@@ -633,14 +633,54 @@ export default function AIModelSelection() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sortedModels.map(model => (
-              <ModelCard
-                key={model.id}
-                model={model}
-                onAction={handleModelAction}
-                isSelected={selectedModels.includes(model.id)}
-              />
-            ))}
+            {sortedModels.map(model => {
+              // Adapt AIModel to ModelCard's expected format
+              const categoryMap: Record<string, 'text' | 'image' | 'code' | 'multimodal'> = {
+                'text': 'text',
+                'code': 'code',
+                'multimodal': 'multimodal',
+                'reasoning': 'text',
+                'creative': 'text',
+                'image': 'image'
+              };
+              
+              const modelCardData = {
+                ...model,
+                category: categoryMap[model.category] || 'text',
+                pricing: {
+                  input: model.pricing.inputTokens,
+                  output: model.pricing.outputTokens,
+                  currency: model.pricing.currency
+                },
+                performance: {
+                  speed: model.performance.speed,
+                  quality: model.performance.quality,
+                  costEfficiency: (model.performance.efficiency > 85 ? 'high' : model.performance.efficiency > 70 ? 'medium' : 'low') as 'low' | 'medium' | 'high'
+                },
+                limits: {
+                  maxTokens: model.specifications.maxTokens,
+                  contextWindow: model.specifications.contextWindow,
+                  requestsPerMinute: 60
+                },
+                metrics: {
+                  latencyP95: model.usage.averageLatency,
+                  throughput: 1000,
+                  errorRate: 100 - model.usage.successRate,
+                  uptime: model.usage.successRate
+                },
+                tags: model.capabilities.slice(0, 3),
+                lastUpdated: new Date().toISOString()
+              };
+              
+              return (
+                <ModelCard
+                  key={model.id}
+                  model={modelCardData}
+                  onAction={handleModelAction}
+                  isSelected={selectedModels.includes(model.id)}
+                />
+              );
+            })}
           </div>
         </div>
       )}

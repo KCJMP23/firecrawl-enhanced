@@ -12,7 +12,7 @@ import {
   TrendingUp, 
   TrendingDown,
   Cpu,
-  Memory,
+  MemoryStick,
   HardDrive,
   Network,
   Users,
@@ -207,7 +207,7 @@ export default function MonitoringDashboard() {
   const getMetricIcon = (metricId: string) => {
     switch (metricId) {
       case 'cpu': return <Cpu className="w-5 h-5" />
-      case 'memory': return <Memory className="w-5 h-5" />
+      case 'memory': return <MemoryStick className="w-5 h-5" />
       case 'disk': return <HardDrive className="w-5 h-5" />
       case 'network': return <Network className="w-5 h-5" />
       case 'requests': return <Users className="w-5 h-5" />

@@ -5,7 +5,7 @@ import {
   Download,
   X,
   Code,
-  FileZip,
+  FolderArchive,
   Globe,
   Sparkles,
   Check
@@ -23,7 +23,7 @@ const exportFormats = [
     id: 'zip',
     name: 'Static HTML/CSS/JS',
     description: 'Complete website files ready to deploy',
-    icon: <FileZip className="w-6 h-6" />,
+    icon: <FolderArchive className="w-6 h-6" />,
     recommended: true
   },
   {

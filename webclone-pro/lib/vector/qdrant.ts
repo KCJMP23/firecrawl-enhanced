@@ -74,7 +74,7 @@ export class QdrantVectorStore {
       try {
         await this.client.createPayloadIndex(this.collectionName, {
           field_name: index.field,
-          field_schema: index.type,
+          field_schema: index.type as any,
         });
       } catch (error) {
         // Index might already exist, continue

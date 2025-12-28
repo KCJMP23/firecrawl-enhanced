@@ -86,9 +86,8 @@ export function CollaborativeCanvas({
       const element = elementsMap.get(elementId)
       
       if (element) {
-        Object.entries(updates).forEach(([key, value]) => {
-          element.set(key as any, value)
-        })
+        const updatedElement = { ...element, ...updates }
+        elementsMap.set(elementId, updatedElement)
       }
     },
     []
@@ -394,7 +393,7 @@ export function CollaborativeCanvas({
                   <div
                     key={connectionId}
                     className="absolute -top-8 left-0 px-2 py-1 rounded text-xs text-white"
-                    style={{ backgroundColor: generateUserColor(info.id) }}
+                    style={{ backgroundColor: generateUserColor(info.email) }}
                   >
                     {info.name} is editing
                   </div>
@@ -438,7 +437,7 @@ export function CollaborativeCanvas({
               >
                 <MousePointer
                   className="w-6 h-6"
-                  style={{ color: generateUserColor(info.id) }}
+                  style={{ color: generateUserColor(info.email) }}
                 />
               </div>
             )

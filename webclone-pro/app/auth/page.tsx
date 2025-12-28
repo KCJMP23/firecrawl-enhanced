@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Globe, 
@@ -14,10 +14,25 @@ import {
   Check,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  Shield,
+  Zap,
+  Star
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { 
+  FadeIn, 
+  FadeInUp, 
+  ScaleIn, 
+  BlurIn, 
+  TextReveal, 
+  Glow,
+  Float,
+  StaggerContainer,
+  StaggerItem,
+  LoadingDots
+} from '@/components/animations/motion-components'
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
@@ -27,16 +42,32 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [isClient, setIsClient] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setSuccess('')
 
     try {
       // Simulate auth delay
       await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Show success message briefly
+      if (mode === 'signup') {
+        setSuccess('Account created successfully!')
+        await new Promise(resolve => setTimeout(resolve, 800))
+      } else {
+        setSuccess('Welcome back!')
+        await new Promise(resolve => setTimeout(resolve, 800))
+      }
       
       // For demo, just redirect to dashboard
       router.push('/dashboard')
@@ -49,9 +80,13 @@ export default function AuthPage() {
 
   const handleSocialAuth = async (provider: 'github' | 'google') => {
     setIsLoading(true)
+    setError('')
+    setSuccess('')
+    
     try {
       // Simulate social auth
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      setSuccess(`Connecting to ${provider === 'github' ? 'GitHub' : 'Google'}...`)
+      await new Promise(resolve => setTimeout(resolve, 1500))
       router.push('/dashboard')
     } catch (err) {
       setError('Social authentication failed.')
@@ -60,218 +95,330 @@ export default function AuthPage() {
     }
   }
 
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background flex items-center justify-center">
+        <LoadingDots className="text-primary" />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-      {/* Animated Background */}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-20 animate-pulse delay-1000" />
+        {/* Gradient Mesh Background */}
+        <div className="absolute inset-0 bg-gradient-mesh opacity-10" />
+        
+        {/* Floating Elements */}
+        <Float duration={8}>
+          <div className="absolute top-1/4 left-1/6 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl" />
+        </Float>
+        <Float duration={12} className="delay-1000">
+          <div className="absolute bottom-1/3 right-1/6 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl" />
+        </Float>
+        <Float duration={10} className="delay-2000">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/10 rounded-full blur-3xl" />
+        </Float>
+        
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-grid opacity-30" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative w-full max-w-md"
-      >
-        {/* Logo */}
+      {/* Main Auth Container */}
+      <FadeInUp className="relative w-full max-w-md z-10">
+        {/* Logo & Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center justify-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-              <Globe className="w-7 h-7 text-white" />
-            </div>
-          </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {mode === 'signin' ? 'Welcome Back' : 'Create Your Account'}
-          </h1>
-          <p className="text-gray-400">
-            {mode === 'signin' 
-              ? 'Sign in to continue building amazing websites' 
-              : 'Start your free trial - no credit card required'}
-          </p>
+          <ScaleIn delay={0.2}>
+            <Link href="/" className="inline-flex items-center justify-center mb-6 group">
+              <Glow color="rgba(139, 92, 246, 0.4)" className="rounded-xl">
+                <div className="w-14 h-14 rounded-xl gradient-brand flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Globe className="w-8 h-8 text-white" />
+                </div>
+              </Glow>
+            </Link>
+          </ScaleIn>
+          
+          <TextReveal delay={0.3}>
+            <h1 className="text-display text-gradient-purple mb-3">
+              {mode === 'signin' ? 'Welcome Back' : 'Join WebClone Pro'}
+            </h1>
+          </TextReveal>
+          
+          <FadeIn delay={0.4}>
+            <p className="text-muted-foreground text-lg">
+              {mode === 'signin' 
+                ? 'Sign in to continue building amazing websites' 
+                : 'Start creating professional websites in minutes'}
+            </p>
+          </FadeIn>
         </div>
 
         {/* Auth Form */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8">
-          {/* Social Auth Buttons */}
-          <div className="space-y-3 mb-6">
-            <button
-              onClick={() => handleSocialAuth('github')}
-              disabled={isLoading}
-              className="w-full py-3 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-all flex items-center justify-center"
-            >
-              <Github className="w-5 h-5 mr-2" />
-              Continue with GitHub
-            </button>
-            
-            <button
-              onClick={() => handleSocialAuth('google')}
-              disabled={isLoading}
-              className="w-full py-3 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-all flex items-center justify-center"
-            >
-              <Chrome className="w-5 h-5 mr-2" />
-              Continue with Google
-            </button>
-          </div>
+        <BlurIn delay={0.5}>
+          <div className="glass-card rounded-3xl p-8 card-shadow-hover border-gradient">
+            {/* Social Auth Buttons */}
+            <StaggerContainer className="space-y-3 mb-6">
+              <StaggerItem>
+                <motion.button
+                  onClick={() => handleSocialAuth('github')}
+                  disabled={isLoading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3.5 px-6 bg-card/50 hover:bg-card/80 border border-border/50 hover:border-primary/30 rounded-xl text-foreground font-medium transition-all flex items-center justify-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Github className="w-5 h-5 mr-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  Continue with GitHub
+                </motion.button>
+              </StaggerItem>
+              
+              <StaggerItem>
+                <motion.button
+                  onClick={() => handleSocialAuth('google')}
+                  disabled={isLoading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3.5 px-6 bg-card/50 hover:bg-card/80 border border-border/50 hover:border-primary/30 rounded-xl text-foreground font-medium transition-all flex items-center justify-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Chrome className="w-5 h-5 mr-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  Continue with Google
+                </motion.button>
+              </StaggerItem>
+            </StaggerContainer>
 
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/20"></div>
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full divider"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-6 bg-card text-muted-foreground font-medium">Or continue with email</span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-transparent text-gray-400">Or continue with email</span>
-            </div>
-          </div>
 
-          {/* Email Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && (
+            {/* Email Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <AnimatePresence mode="wait">
+                {mode === 'signup' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className="block text-sm font-semibold text-foreground/90 mb-3">
+                      Full Name
+                    </label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your full name"
+                        required={mode === 'signup'}
+                        className="w-full pl-12 pr-4 py-4 bg-background/50 border border-border/50 hover:border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
+                <label className="block text-sm font-semibold text-foreground/90 mb-3">
+                  Email Address
                 </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="John Doe"
-                    required={mode === 'signup'}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email address"
+                    required
+                    className="w-full pl-12 pr-4 py-4 bg-background/50 border border-border/50 hover:border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
                   />
                 </div>
               </div>
-            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  minLength={8}
-                  className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {mode === 'signin' && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  <span className="text-sm text-gray-300">Remember me</span>
+              <div>
+                <label className="block text-sm font-semibold text-foreground/90 mb-3">
+                  Password
                 </label>
-                <Link href="/auth/reset" className="text-sm text-purple-400 hover:text-purple-300">
-                  Forgot password?
-                </Link>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    minLength={8}
+                    className="w-full pl-12 pr-12 py-4 bg-background/50 border border-border/50 hover:border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                  />
+                  <motion.button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </motion.button>
+                </div>
               </div>
-            )}
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center"
-              >
-                <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-                <span className="text-sm text-red-300">{error}</span>
-              </motion.div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  {mode === 'signin' ? 'Sign In' : 'Create Account'}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </>
+              {mode === 'signin' && (
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mr-3 h-4 w-4 rounded border-border/50 text-primary focus:ring-primary/20" 
+                    />
+                    <span className="text-sm text-muted-foreground">Remember me</span>
+                  </label>
+                  <Link 
+                    href="/auth/reset" 
+                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Toggle Mode */}
-          <div className="mt-6 text-center">
-            <span className="text-gray-400">
-              {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
-            </span>
-            <button
-              onClick={() => {
-                setMode(mode === 'signin' ? 'signup' : 'signin')
-                setError('')
-              }}
-              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-            >
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
-            </button>
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-start"
+                  >
+                    <AlertCircle className="w-5 h-5 text-destructive mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-destructive font-medium">{error}</span>
+                  </motion.div>
+                )}
+                
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start"
+                  >
+                    <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-green-600 dark:text-green-400 font-medium">{success}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                type="submit"
+                disabled={isLoading}
+                whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                className="w-full py-4 gradient-brand text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center glow-sm hover:glow-md group relative overflow-hidden"
+              >
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <LoadingDots className="text-white mr-3" />
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>{mode === 'signin' ? 'Sign In to Account' : 'Create Free Account'}</span>
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-shimmer" />
+              </motion.button>
+            </form>
+
+            {/* Toggle Mode */}
+            <div className="mt-8 text-center">
+              <span className="text-muted-foreground">
+                {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+              </span>
+              <motion.button
+                onClick={() => {
+                  setMode(mode === 'signin' ? 'signup' : 'signin')
+                  setError('')
+                  setSuccess('')
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="text-primary hover:text-primary/80 font-semibold transition-colors"
+              >
+                {mode === 'signin' ? 'Sign up for free' : 'Sign in instead'}
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </BlurIn>
 
         {/* Features Banner */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8 p-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-xl"
-        >
-          <div className="flex items-center justify-center mb-3">
-            <Sparkles className="w-5 h-5 text-purple-400 mr-2" />
-            <span className="text-sm font-semibold text-white">Start Your 14-Day Free Trial</span>
+        <FadeInUp delay={0.6} className="mt-8">
+          <div className="glass-card rounded-2xl p-6 border-gradient overflow-hidden relative">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-purple opacity-5" />
+            
+            <div className="relative">
+              <div className="flex items-center justify-center mb-4">
+                <Glow color="rgba(236, 72, 153, 0.3)">
+                  <Sparkles className="w-6 h-6 text-primary mr-3" />
+                </Glow>
+                <span className="text-base font-bold text-gradient-purple">
+                  {mode === 'signup' ? 'Free Trial - No Credit Card Required' : 'Welcome to WebClone Pro'}
+                </span>
+              </div>
+              
+              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <StaggerItem className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
+                    <Check className="w-4 h-4 text-green-500" />
+                  </div>
+                  <span className="text-foreground/80">Unlimited website clones</span>
+                </StaggerItem>
+                
+                <StaggerItem className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center mr-3">
+                    <Zap className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <span className="text-foreground/80">AI-powered generation</span>
+                </StaggerItem>
+                
+                <StaggerItem className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mr-3">
+                    <Shield className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <span className="text-foreground/80">Enterprise-grade security</span>
+                </StaggerItem>
+                
+                <StaggerItem className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                  </div>
+                  <span className="text-foreground/80">Premium support</span>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-400 mr-1" />
-              <span>Unlimited clones</span>
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-400 mr-1" />
-              <span>No credit card</span>
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-400 mr-1" />
-              <span>All features</span>
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-400 mr-1" />
-              <span>Cancel anytime</span>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
+        </FadeInUp>
+        
+        {/* Footer */}
+        <FadeIn delay={0.8} className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            By continuing, you agree to our{' '}
+            <Link href="/terms" className="text-primary hover:text-primary/80 transition-colors">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="text-primary hover:text-primary/80 transition-colors">
+              Privacy Policy
+            </Link>
+          </p>
+        </FadeIn>
+      </FadeInUp>
     </div>
   )
 }

@@ -565,8 +565,8 @@ animate('${animation.target}', ${JSON.stringify(props)}, {
     return parts.map(part => {
       const [property, duration, easing, delay] = part.split(' ')
       return {
-        property,
-        duration: parseFloat(duration) * 1000,
+        property: property || 'all',
+        duration: duration ? parseFloat(duration) * 1000 : 0,
         easing: easing || 'ease',
         delay: delay ? parseFloat(delay) * 1000 : 0
       }

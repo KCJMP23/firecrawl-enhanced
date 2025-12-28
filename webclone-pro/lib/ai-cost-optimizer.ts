@@ -123,9 +123,10 @@ export class AICostOptimizer {
     
     // Find models that can handle this task
     for (const [modelName, config] of Object.entries(this.models)) {
-      if (config.useCase.some(useCase => 
-        task.toLowerCase().includes(useCase.split('-')[0])
-      )) {
+      if (config.useCase.some(useCase => {
+        const firstPart = useCase.split('-')[0];
+        return firstPart ? task.toLowerCase().includes(firstPart) : false;
+      })) {
         candidates.push(modelName)
       }
     }
@@ -138,13 +139,13 @@ export class AICostOptimizer {
     // Select based on complexity and budget
     switch (complexity) {
       case 'simple':
-        return candidates.includes('gpt-4o-mini') ? 'gpt-4o-mini' : candidates[0]
+        return candidates.includes('gpt-4o-mini') ? 'gpt-4o-mini' : (candidates[0] || 'gpt-4o-mini')
       
       case 'medium':
         if (budget && budget < 0.01) {
           return 'gpt-4o-mini'
         }
-        return candidates.includes('gpt-4o') ? 'gpt-4o' : candidates[0]
+        return candidates.includes('gpt-4o') ? 'gpt-4o' : (candidates[0] || 'gpt-4o')
       
       case 'complex':
         if (task.includes('code') || task.includes('framework')) {

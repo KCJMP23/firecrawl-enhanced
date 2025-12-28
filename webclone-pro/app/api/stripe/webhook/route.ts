@@ -218,9 +218,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Stripe requires raw body for webhook verification
-export const config = {
-  api: {
-    bodyParser: false
-  }
-}
+// Next.js 16+ doesn't need bodyParser config for Stripe webhooks
+// The raw body is now automatically available

@@ -794,7 +794,7 @@ export default function PerformanceOptimizer() {
             <h3 className="text-lg font-semibold text-white">Performance Monitoring</h3>
             <div className="flex items-center space-x-2">
               <SimpleButton 
-                variant={isMonitoring ? 'danger' : 'default'}
+                variant={isMonitoring ? 'destructive' : 'default'}
                 onClick={() => setIsMonitoring(!isMonitoring)}
               >
                 {isMonitoring ? (

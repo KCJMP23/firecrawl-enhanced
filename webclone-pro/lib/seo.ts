@@ -7,7 +7,7 @@ export interface SEOConfig {
   keywords?: string[]
   canonical?: string
   ogImage?: string
-  ogType?: 'website' | 'article' | 'product'
+  ogType?: 'website' | 'article'
   twitterCard?: 'summary' | 'summary_large_image' | 'player'
   noindex?: boolean
   nofollow?: boolean
@@ -103,8 +103,7 @@ export class SEOManager {
       },
       verification: {
         google: process.env.GOOGLE_SITE_VERIFICATION,
-        yandex: process.env.YANDEX_VERIFICATION,
-        bing: process.env.BING_VERIFICATION
+        yandex: process.env.YANDEX_VERIFICATION
       }
     }
 

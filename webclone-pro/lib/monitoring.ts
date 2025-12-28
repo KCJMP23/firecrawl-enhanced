@@ -78,7 +78,7 @@ export class MetricsCollector {
       return null
     }
     
-    return metricData[metricData.length - 1].value
+    return metricData[metricData.length - 1]?.value || 0
   }
 
   // Get all metric names

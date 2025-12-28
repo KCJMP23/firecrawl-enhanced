@@ -109,11 +109,11 @@ export function CollaborativeCodeEditor({
       const file = codeChanges.get(fileId)
       
       if (file) {
-        if (lock) {
-          file.set('lockedBy', myPresence.user.id)
-        } else {
-          file.set('lockedBy', undefined)
+        const updatedFile = {
+          ...file,
+          lockedBy: lock ? myPresence.user.id : undefined
         }
+        codeChanges.set(fileId, updatedFile)
       }
     },
     [myPresence.user.id]
@@ -214,7 +214,7 @@ export function CollaborativeCodeEditor({
                   <div
                     key={connectionId}
                     className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-medium text-white"
-                    style={{ backgroundColor: generateUserColor(info.id) }}
+                    style={{ backgroundColor: generateUserColor(info.email) }}
                   >
                     {info.name[0]}
                   </div>
@@ -322,7 +322,7 @@ export function CollaborativeCodeEditor({
           >
             <div
               className="px-2 py-1 rounded text-xs text-white"
-              style={{ backgroundColor: generateUserColor(info.id) }}
+              style={{ backgroundColor: generateUserColor(info.email) }}
             >
               {info.name}
             </div>

@@ -24,7 +24,7 @@ export const TaskSchema = z.object({
   description: z.string(),
   expectedOutput: z.string(),
   agentId: z.string(),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
   dependencies: z.array(z.string()).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
   deadline: z.date().optional(),
@@ -40,7 +40,7 @@ export const WorkflowSchema = z.object({
   tasks: z.array(TaskSchema),
   agents: z.array(AgentConfigSchema),
   status: z.enum(['pending', 'running', 'completed', 'failed']).default('pending'),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type Workflow = z.infer<typeof WorkflowSchema>;
@@ -54,7 +54,7 @@ export const ExecutionResultSchema = z.object({
   artifacts: z.array(z.object({
     type: z.string(),
     content: z.any(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   })).optional(),
   errors: z.array(z.string()).optional(),
   executionTime: z.number(),

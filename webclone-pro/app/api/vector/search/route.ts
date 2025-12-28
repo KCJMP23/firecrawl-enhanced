@@ -8,7 +8,7 @@ const SearchSchema = z.object({
   collection: z.enum(['websites', 'components']),
   limit: z.number().min(1).max(50).default(10),
   threshold: z.number().min(0).max(1).default(0.7),
-  filter: z.record(z.any()).optional(),
+  filter: z.record(z.string(), z.any()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request format', details: error.errors },
+        { error: 'Invalid request format', details: error.issues },
         { status: 400 }
       );
     }

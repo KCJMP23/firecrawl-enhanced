@@ -34,12 +34,12 @@ export function SimpleButton({
   
   // Variant-specific styling
   const variantClasses = {
-    'default': 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700',
-    'outline': 'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
-    'ghost': 'text-foreground hover:bg-accent hover:text-accent-foreground',
+    'default': 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700',
+    'outline': 'border border-white/20 bg-transparent hover:bg-white/10 text-white',
+    'ghost': 'text-white hover:bg-white/10',
     'primary': 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700',
-    'secondary': 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    'destructive': 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+    'secondary': 'bg-gray-600 text-white hover:bg-gray-700',
+    'destructive': 'bg-red-600 text-white hover:bg-red-700'
   }
   
   // Size-specific styling

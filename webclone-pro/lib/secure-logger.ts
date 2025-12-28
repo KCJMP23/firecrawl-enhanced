@@ -125,10 +125,10 @@ function maskSensitiveValue(value: any): string {
   // Email masking
   if (str.includes('@')) {
     const [local, domain] = str.split('@')
-    if (local.length > 2) {
+    if (local && local.length > 2) {
       return `${local.substring(0, 2)}***@${domain}`
     }
-    return `***@${domain}`
+    return `***@${domain || ''}`
   }
   
   // Credit card number masking (if numeric)

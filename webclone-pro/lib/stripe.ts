@@ -5,7 +5,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-12-15.clover',
   typescript: true,
 })
 
@@ -215,7 +215,7 @@ export async function updateSubscription({
   return await stripe.subscriptions.update(subscriptionId, {
     items: [
       {
-        id: subscription.items.data[0].id,
+        id: subscription.items.data[0]?.id || '',
         price: newPriceId
       }
     ],
@@ -244,7 +244,7 @@ export async function reportUsage({
   quantity: number
   timestamp?: number
 }) {
-  return await stripe.subscriptionItems.createUsageRecord(
+  return await (stripe.subscriptionItems as any).createUsageRecord(
     subscriptionItemId,
     {
       quantity,

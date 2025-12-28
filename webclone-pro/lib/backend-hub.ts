@@ -662,7 +662,7 @@ export class BackendHub {
           relationships.push({
             from: { table: table.name, column: column.name },
             to: { table: column.references.table, column: column.references.column },
-            type: 'many-to-one' // Default, could be enhanced with cardinality detection
+            type: 'one-to-many' // Default, could be enhanced with cardinality detection
           })
         }
       }

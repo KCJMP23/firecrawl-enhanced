@@ -238,7 +238,7 @@ export class PDFProcessor {
 
           return {
             ...chunk,
-            embedding: response.data[0].embedding
+            embedding: response.data[0]?.embedding || []
           }
         } catch (error) {
           console.error('Embedding generation error:', error)
@@ -288,7 +288,7 @@ Please respond in JSON format:
         cost = this.costOptimizer.calculateRequestCost(model, response.usage.prompt_tokens, response.usage.completion_tokens)
       }
 
-      const analysis = JSON.parse(response.choices[0].message.content || '{}')
+      const analysis = JSON.parse(response.choices[0]?.message?.content || '{}')
       return {
         summary: analysis.summary || '',
         topics: analysis.topics || [],
@@ -346,7 +346,7 @@ Please respond in JSON format:
             totalImageCost += cost
           }
 
-          const analysis = JSON.parse(response.choices[0].message.content || '{}')
+          const analysis = JSON.parse(response.choices[0]?.message?.content || '{}')
           
           return {
             ...image,
@@ -379,7 +379,7 @@ Please respond in JSON format:
 
       // Find relevant chunks using vector similarity
       const relevantChunks = await this.findRelevantChunks(
-        queryEmbedding.data[0].embedding,
+        queryEmbedding.data[0]?.embedding || [],
         userId,
         documentIds
       )
@@ -389,7 +389,7 @@ Please respond in JSON format:
 
       return {
         chunks: relevantChunks,
-        relevanceScore: relevantChunks.length > 0 ? relevantChunks[0].relevanceScore : 0,
+        relevanceScore: relevantChunks.length > 0 ? relevantChunks[0]?.relevanceScore || 0 : 0,
         answer,
         sources: relevantChunks.map(chunk => ({
           pageNumber: chunk.pageNumber,
@@ -452,7 +452,7 @@ Answer:`
         max_tokens: 500
       })
 
-      return response.choices[0].message.content || 'I cannot generate an answer at this time.'
+      return response.choices[0]?.message?.content || 'I cannot generate an answer at this time.'
     } catch (error) {
       console.error('Answer generation error:', error)
       return 'I cannot generate an answer at this time.'
@@ -463,9 +463,9 @@ Answer:`
    * Save document to database
    */
   private async saveDocument(document: PDFDocument): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase
       .from('pdf_documents')
-      .upsert(document)
+      .upsert as any)(document)
 
     if (error) {
       throw new Error(`Database error: ${error.message}`)
@@ -476,9 +476,9 @@ Answer:`
    * Update document status
    */
   private async updateDocumentStatus(documentId: string, status: PDFDocument['status']): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase
       .from('pdf_documents')
-      .update({ status })
+      .update as any)({ status })
       .eq('id', documentId)
 
     if (error) {

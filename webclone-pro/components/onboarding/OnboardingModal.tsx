@@ -84,7 +84,7 @@ export function OnboardingModal() {
   } = useOnboarding()
 
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
-  const currentStepData = steps[currentStep]
+  const currentStepData = steps[currentStep]!  // steps array always has items
   const isLastStep = currentStep === steps.length - 1
 
   const handleNext = () => {

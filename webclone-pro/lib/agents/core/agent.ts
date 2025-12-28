@@ -20,6 +20,18 @@ export class Agent {
     };
   }
 
+  getId(): string {
+    return this.config.id;
+  }
+
+  getRole(): string {
+    return this.config.role;
+  }
+
+  getConfig(): AgentConfig {
+    return this.config;
+  }
+
   async executeTask(task: Task): Promise<ExecutionResult> {
     const startTime = Date.now();
     

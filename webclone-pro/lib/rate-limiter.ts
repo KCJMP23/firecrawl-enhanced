@@ -55,7 +55,7 @@ setInterval(() => {
  * Default key generator based on IP and User-Agent
  */
 function defaultKeyGenerator(request: NextRequest): string {
-  const ip = request.ip || 'unknown'
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown'
   const userAgent = request.headers.get('user-agent') || 'unknown'
   return `${ip}:${userAgent.slice(0, 50)}`
 }
@@ -105,7 +105,7 @@ export function createRateLimiter(config: RateLimitConfig) {
           {
             endpoint: new URL(request.url).pathname,
             userAgent: request.headers.get('user-agent') || undefined,
-            ip: request.ip || undefined
+            ip: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || undefined
           },
           {
             rateLimitKey: key,
@@ -168,7 +168,7 @@ export const webhookRateLimiter = createRateLimiter({
     // Rate limit by webhook source
     const signature = request.headers.get('stripe-signature') || 
                      request.headers.get('webhook-signature') ||
-                     request.ip || 'unknown'
+                     request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown'
     return `webhook:${signature.slice(0, 20)}`
   },
   message: 'Webhook rate limit exceeded.'
@@ -260,7 +260,7 @@ export class DoSProtection {
   }
   
   checkRequest(request: NextRequest): { blocked: boolean; reason?: string } {
-    const ip = request.ip || 'unknown'
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || ''
     const contentLength = parseInt(request.headers.get('content-length') || '0')
     

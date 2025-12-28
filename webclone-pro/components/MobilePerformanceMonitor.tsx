@@ -222,6 +222,7 @@ function IssuesPanel({ issues }: { issues: PerformanceIssue[] }) {
       case 'high': return 'text-red-400 bg-red-400/20'
       case 'medium': return 'text-yellow-400 bg-yellow-400/20'
       case 'low': return 'text-blue-400 bg-blue-400/20'
+      default: return 'text-gray-400 bg-gray-400/20'
     }
   }
 
@@ -230,6 +231,7 @@ function IssuesPanel({ issues }: { issues: PerformanceIssue[] }) {
       case 'high': return <XCircle className="w-4 h-4" />
       case 'medium': return <AlertTriangle className="w-4 h-4" />
       case 'low': return <CheckCircle className="w-4 h-4" />
+      default: return <CheckCircle className="w-4 h-4" />
     }
   }
 

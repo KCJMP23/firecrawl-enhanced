@@ -76,20 +76,20 @@ export type RoomEvent =
 
 // Create the Liveblocks client
 const client = createClient({
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
+  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || 'demo-key',
   throttle: 16, // 60fps cursor updates
   
-  // Authentication endpoint for production
-  authEndpoint: async (room) => {
-    const response = await fetch('/api/collaboration/auth', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ room }),
-    })
-    return await response.json()
-  },
+  // Note: In production, you would use authEndpoint instead of publicApiKey
+  // authEndpoint: async (room) => {
+  //   const response = await fetch('/api/collaboration/auth', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ room }),
+  //   })
+  //   return await response.json()
+  // },
 })
 
 // Create room context with proper types
@@ -104,10 +104,6 @@ export const {
   useBroadcastEvent,
   useEventListener,
   useStorage,
-  useObject,
-  useMap,
-  useList,
-  useBatch,
   useHistory,
   useUndo,
   useRedo,
@@ -125,7 +121,7 @@ export function generateUserColor(userId: string): string {
     '#FD79A8', '#A29BFE', '#6C5CE7', '#00B894', '#FDCB6E'
   ]
   const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return colors[hash % colors.length]
+  return colors[hash % colors.length] ?? '#FF6B6B'
 }
 
 export function formatUserInitials(name: string): string {

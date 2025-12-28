@@ -364,8 +364,21 @@ export default function AnimationMarketplace({
       id: 'col1',
       name: 'Ultimate Hero Animations',
       description: 'Best hero section animations for modern websites',
-      creator: animations[0].creator,
-      animations: [animations[0]],
+      creator: animations[0]?.creator || { 
+        id: 'default', 
+        username: 'default', 
+        displayName: 'Default Creator', 
+        avatar: '', 
+        bio: '', 
+        verified: false, 
+        level: 'beginner' as CreatorLevel, 
+        earnings: 0, 
+        sales: 0, 
+        rating: 0, 
+        followers: 0, 
+        animations: 0 
+      },
+      animations: animations.length > 0 && animations[0] ? [animations[0]] : [],
       followers: 2500,
       public: true,
       tags: ['hero', 'premium', 'trending']
@@ -386,7 +399,7 @@ export default function AnimationMarketplace({
         { rank: 3, reward: '$250 + Pro License', value: 450 }
       ],
       submissions: [],
-      judges: [animations[0].creator],
+      judges: animations[0]?.creator ? [animations[0].creator] : [],
       rules: ['Original work only', 'Max 10KB size', 'Any animation library'],
       status: 'active'
     }

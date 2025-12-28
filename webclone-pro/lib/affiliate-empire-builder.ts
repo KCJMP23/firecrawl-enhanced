@@ -611,7 +611,7 @@ export class AffiliateEmpireBuilder {
       `${keyword} vs Competition: Which Should You Choose?`
     ]
     
-    return templates[Math.floor(Math.random() * templates.length)]
+    return templates[Math.floor(Math.random() * templates.length)]!
   }
 
   private selectContentType(topic: string): ContentType {
@@ -670,7 +670,7 @@ export class AffiliateEmpireBuilder {
       date.setDate(date.getDate() + day)
       
       // Select pillar and article
-      const pillar = pillars[day % pillars.length]
+      const pillar = pillars[day % pillars.length]!
       const article = pillar.articles[Math.floor(day / pillars.length) % pillar.articles.length]
       
       if (article) {

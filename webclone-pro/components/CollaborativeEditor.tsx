@@ -12,6 +12,7 @@ import {
   useRoom,
   useStatus
 } from '@/lib/liveblocks'
+import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -64,6 +65,19 @@ export function CollaborativeEditor({ projectId, children }: CollaborativeEditor
         isTyping: false,
         currentView: 'editor'
       }}
+      initialStorage={() => ({
+        cursors: new LiveMap(),
+        elements: new LiveMap(),
+        codeChanges: new LiveMap(),
+        projectData: new LiveObject({
+          id: projectId,
+          name: '',
+          url: '',
+          lastModified: new Date().toISOString(),
+          version: 1
+        }),
+        annotations: new LiveList([])
+      })}
     >
       <CollaborativeWorkspace projectId={projectId}>
         {children}
@@ -110,6 +124,8 @@ function CollaborativeWorkspace({ projectId, children }: CollaborativeEditorProp
 
   // Listen for collaboration events
   useEventListener(({ event, user, connectionId }) => {
+    if (!user) return
+    
     switch (event.type) {
       case 'ELEMENT_SELECTED':
         toast(`${user.info.name} selected an element`, {
@@ -150,11 +166,11 @@ function CollaborativeWorkspace({ projectId, children }: CollaborativeEditorProp
       >
         <MousePointer
           className="w-6 h-6"
-          style={{ color: presence.user.color || generateUserColor(info.id) }}
+          style={{ color: presence.user.color || generateUserColor(info.email) }}
         />
         <div
           className="absolute top-6 left-0 px-2 py-1 rounded text-xs text-white whitespace-nowrap"
-          style={{ backgroundColor: presence.user.color || generateUserColor(info.id) }}
+          style={{ backgroundColor: presence.user.color || generateUserColor(info.email) }}
         >
           {info.name}
         </div>
@@ -183,7 +199,7 @@ function CollaborativeWorkspace({ projectId, children }: CollaborativeEditorProp
                       <Avatar className="w-8 h-8 border-2 border-white dark:border-gray-800">
                         <AvatarImage src={info.avatar} />
                         <AvatarFallback
-                          style={{ backgroundColor: generateUserColor(info.id) }}
+                          style={{ backgroundColor: generateUserColor(info.email) }}
                         >
                           {formatUserInitials(info.name)}
                         </AvatarFallback>
@@ -355,7 +371,7 @@ function CollaborativeWorkspace({ projectId, children }: CollaborativeEditorProp
                 <div key={connectionId} className="flex items-center gap-2 text-xs">
                   <div
                     className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: generateUserColor(info.id) }}
+                    style={{ backgroundColor: generateUserColor(info.email) }}
                   />
                   <span className="font-medium">{info.name}</span>
                   <span className="text-gray-500">
